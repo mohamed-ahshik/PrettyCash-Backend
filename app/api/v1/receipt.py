@@ -26,5 +26,7 @@ async def analyze_receipt(
     settings = request.app.state.settings
     analyzer = request.app.state.analyzer
 
-    image_bytes, mime_type = decode_and_process(payload.image.base64, settings)
+    image_bytes, mime_type = await run_in_threadpool(
+        decode_and_process, payload.image.base64, settings
+    )
     return await run_in_threadpool(analyzer.analyze, image_bytes, mime_type)

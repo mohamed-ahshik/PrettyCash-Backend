@@ -106,6 +106,18 @@ async def test_analyze_receipt_wrong_key(client):
     assert response.json()["error"]["code"] == "UNAUTHORIZED"
 
 
+async def test_analyze_receipt_validation_error_uses_contract_shape(client):
+    response = await client.post(
+        "/api/v1/analyze-receipt",
+        json={"image": {"mimeType": "image/png"}},  # missing base64
+        headers=AUTH,
+    )
+    assert response.status_code == 422
+    assert response.json() == {
+        "error": {"code": "UNPROCESSABLE", "message": "Invalid request"}
+    }
+
+
 async def test_analyze_receipt_invalid_image(client):
     response = await client.post(
         "/api/v1/analyze-receipt",

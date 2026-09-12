@@ -1,7 +1,9 @@
 import logging
 
 from fastapi import FastAPI, Request
+from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
+from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from app.api.deps import RateLimiter
 from app.api.v1.router import api_router
@@ -33,6 +35,30 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         return JSONResponse(
             status_code=exc.status_code,
             content={"error": {"code": exc.code.value, "message": message}},
+        )
+
+    @app.exception_handler(RequestValidationError)
+    async def request_validation_error_handler(
+        request: Request, exc: RequestValidationError
+    ) -> JSONResponse:
+        return JSONResponse(
+            status_code=422,
+            content={
+                "error": {
+                    "code": ErrorCode.UNPROCESSABLE.value,
+                    "message": "Invalid request",
+                }
+            },
+        )
+
+    @app.exception_handler(StarletteHTTPException)
+    async def http_exception_handler(
+        request: Request, exc: StarletteHTTPException
+    ) -> JSONResponse:
+        code = ErrorCode.INTERNAL if exc.status_code >= 500 else ErrorCode.UNPROCESSABLE
+        return JSONResponse(
+            status_code=exc.status_code,
+            content={"error": {"code": code.value, "message": str(exc.detail)}},
         )
 
     @app.exception_handler(Exception)
