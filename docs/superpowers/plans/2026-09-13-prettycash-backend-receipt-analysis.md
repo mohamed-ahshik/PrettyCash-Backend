@@ -1369,9 +1369,7 @@ async def test_analyze_receipt_provider_error_is_internal(client):
         response = await client.post("/api/v1/analyze-receipt", json=_payload(), headers=AUTH)
 
     assert response.status_code == 500
-    body = response.json()
-    assert body["error"]["code"] == "INTERNAL"
-    assert "key" not in json.dumps(body).lower() or "api_key" not in json.dumps(body)
+    assert response.json() == {"error": {"code": "INTERNAL", "message": "Internal server error"}}
 
 
 async def test_analyze_receipt_rate_limited():
