@@ -32,3 +32,13 @@ uv run ruff check .
 ## API
 
 `POST /api/v1/analyze-receipt` — see `docs/superpowers/specs/` for the full contract.
+
+## Docker
+
+```bash
+docker compose -f docker/compose.yaml build
+docker compose -f docker/compose.yaml up
+```
+
+The `worker` service is wired now (drains the sync queue). Uncomment the `redis` service
+and swap `SyncQueue` for `RedisQueue` when the Redis-backed queue is implemented.
