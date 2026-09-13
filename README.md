@@ -1,24 +1,20 @@
 # PrettyCash Backend
 
-FastAPI backend for PrettyCash's AI receipt scanning. Exposes a single, API-key-locked endpoint
-that analyzes a receipt image with the Gemini vision API and returns structured transaction data.
+FastAPI backend for PrettyCash's AI receipt scanning. Accepts a receipt image, enqueues it for
+AI analysis, and exposes the result via a polling endpoint. Uses Redis for the job queue and
+Supabase (Postgres) for durable job status.
 
 ## Setup
 
 ```bash
 uv sync
-cp .env.example .env   # then fill in GEMINI_API_KEY and VISION_API_KEY
+cp .env.example .env   # fill in GEMINI_API_KEY, VISION_API_KEY, REDIS_URL, SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY
 ```
 
-## Run
+## Run locally
 
 ```bash
 uv run uvicorn app.main:create_app --factory --host 0.0.0.0 --port 8000
-```
-
-## Run worker (drains the sync queue; Redis-backed worker comes later)
-
-```bash
 uv run python -m app.workers.worker
 ```
 
@@ -31,14 +27,18 @@ uv run ruff check .
 
 ## API
 
-`POST /api/v1/analyze-receipt` — see `docs/superpowers/specs/` for the full contract.
+- `POST /api/v1/analyze-receipt` → `202 { "jobId", "status": "pending" }`
+- `GET /api/v1/jobs/{jobId}` → `{ status }` | `{ status, result }` | `{ status, error }`
 
-## Docker
+See `docs/superpowers/specs/` for the full contract.
+
+## Docker Compose
 
 ```bash
 docker compose -f docker/compose.yaml build
 docker compose -f docker/compose.yaml up
 ```
 
-The `worker` service is wired now (drains the sync queue). Uncomment the `redis` service
-and swap `SyncQueue` for `RedisQueue` when the Redis-backed queue is implemented.
+Runs `api`, `worker`, and `redis` (persisted via the `redis-data` volume with AOF). Supabase is
+external — configure `SUPABASE_URL` / `SUPABASE_SERVICE_ROLE_KEY` and apply the migration in
+`supabase/migrations/` to your project.
