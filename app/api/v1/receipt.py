@@ -3,7 +3,7 @@ import base64
 from fastapi import APIRouter, Depends, Request
 from starlette.concurrency import run_in_threadpool
 
-from app.api.deps import require_rate_limit
+from app.api.deps import require_api_key, require_rate_limit
 from app.api.v1.schemas import AnalyzeReceiptAccepted, AnalyzeReceiptRequest, JobStatusResponse
 from app.core.errors import NotFoundError
 from app.queue.base import Job
@@ -46,7 +46,7 @@ async def analyze_receipt(
     response_model=JobStatusResponse,
     response_model_exclude_none=True,
 )
-async def get_job(job_id: str, request: Request, _token: str = Depends(require_rate_limit)):
+async def get_job(job_id: str, request: Request, _token: str = Depends(require_api_key)):
     row = request.app.state.job_store.get(job_id)
     if row is None:
         raise NotFoundError("Job not found")

@@ -133,3 +133,26 @@ async def test_analyze_receipt_rate_limited(job_store):
     assert first.status_code == 202
     assert second.status_code == 429
     assert second.json()["error"]["code"] == "RATE_LIMITED"
+
+
+async def test_get_job_not_rate_limited(job_store):
+    app = create_app(
+        Settings(
+            gemini_api_key="g",
+            vision_api_key="test-vision-key",
+            redis_url="redis://localhost:6379/0",
+            supabase_url="https://example.supabase.co",
+            supabase_service_role_key="key",
+            rate_limit_per_minute=1,
+        ),
+        job_store=job_store,
+        redis_client=fakeredis.FakeRedis(decode_responses=True),
+    )
+    transport = httpx.ASGITransport(app=app)
+    async with httpx.AsyncClient(transport=transport, base_url="http://test") as c:
+        post = await c.post("/api/v1/analyze-receipt", json=_payload(), headers=AUTH)
+        assert post.status_code == 202
+        job_id = post.json()["jobId"]
+        get = await c.get(f"/api/v1/jobs/{job_id}", headers=AUTH)
+
+    assert get.status_code == 200

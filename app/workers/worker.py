@@ -25,8 +25,8 @@ def _to_error(exc: Exception) -> tuple[str, str]:
 
 
 def process_job(job: Job, analyzer: ReceiptAnalyzer, job_store: JobStore) -> ReceiptDraft:
-    job_store.mark_processing(job.job_id)
     try:
+        job_store.mark_processing(job.job_id)
         image_bytes = base64.b64decode(job.image_base64)
         draft = analyzer.analyze(image_bytes, job.mime_type)
     except Exception as exc:
@@ -45,7 +45,12 @@ def run_worker(
     poll_interval: float = 1.0,
 ) -> None:
     while stop_event is None or not stop_event.is_set():
-        job = queue.dequeue()
+        try:
+            job = queue.dequeue()
+        except Exception:  # noqa: BLE001 - Redis blip must not kill the worker
+            logger.exception("Queue dequeue failed; retrying")
+            time.sleep(poll_interval)
+            continue
         if job is None:
             time.sleep(poll_interval)
             continue
