@@ -1,28 +1,8 @@
 import secrets
-import threading
-import time
-from collections import deque
 
 from fastapi import Depends, Request
 
-from app.core.errors import RateLimitedError, UnauthorizedError
-
-
-class RateLimiter:
-    def __init__(self, per_minute: int) -> None:
-        self._per_minute = per_minute
-        self._buckets: dict[str, deque[float]] = {}
-        self._lock = threading.Lock()
-
-    def check(self, key: str) -> None:
-        now = time.monotonic()
-        with self._lock:
-            bucket = self._buckets.setdefault(key, deque())
-            while bucket and now - bucket[0] > 60.0:
-                bucket.popleft()
-            if len(bucket) >= self._per_minute:
-                raise RateLimitedError("Rate limit exceeded")
-            bucket.append(now)
+from app.core.errors import UnauthorizedError
 
 
 def require_api_key(request: Request) -> str:

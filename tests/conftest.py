@@ -1,3 +1,4 @@
+import fakeredis
 import httpx
 import pytest
 
@@ -30,11 +31,6 @@ class FakeJobStore:
 
 
 @pytest.fixture
-def job_store() -> FakeJobStore:
-    return FakeJobStore()
-
-
-@pytest.fixture
 def settings() -> Settings:
     return Settings(
         gemini_api_key="test-gemini-key",
@@ -48,7 +44,13 @@ def settings() -> Settings:
 
 
 @pytest.fixture
-def client(settings):
-    app = create_app(settings)
+def job_store() -> FakeJobStore:
+    return FakeJobStore()
+
+
+@pytest.fixture
+def client(settings, job_store):
+    redis_client = fakeredis.FakeRedis(decode_responses=True)
+    app = create_app(settings, job_store=job_store, redis_client=redis_client)
     transport = httpx.ASGITransport(app=app)
     return httpx.AsyncClient(transport=transport, base_url="http://test")
