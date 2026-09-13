@@ -142,6 +142,9 @@ async def test_analyze_receipt_rate_limited():
         Settings(
             gemini_api_key="g",
             vision_api_key="test-vision-key",
+            redis_url="redis://localhost:6379/0",
+            supabase_url="https://example.supabase.co",
+            supabase_service_role_key="key",
             rate_limit_per_minute=1,
         )
     )

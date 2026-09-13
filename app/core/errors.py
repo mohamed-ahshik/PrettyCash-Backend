@@ -7,6 +7,7 @@ class ErrorCode(StrEnum):
     UNPROCESSABLE = "UNPROCESSABLE"
     RATE_LIMITED = "RATE_LIMITED"
     INTERNAL = "INTERNAL"
+    NOT_FOUND = "NOT_FOUND"
 
 
 class AppError(Exception):
@@ -47,3 +48,9 @@ class InternalError(AppError):
     status_code = 500
     code = ErrorCode.INTERNAL
     default_message = "Internal server error"
+
+
+class NotFoundError(AppError):
+    status_code = 404
+    code = ErrorCode.NOT_FOUND
+    default_message = "Not found"

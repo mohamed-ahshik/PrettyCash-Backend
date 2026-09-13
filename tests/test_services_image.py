@@ -10,7 +10,13 @@ from app.services.image import decode_and_process
 
 
 def _settings(**overrides) -> Settings:
-    values = {"gemini_api_key": "g", "vision_api_key": "v"}
+    values = {
+        "gemini_api_key": "g",
+        "vision_api_key": "v",
+        "redis_url": "redis://localhost:6379/0",
+        "supabase_url": "https://example.supabase.co",
+        "supabase_service_role_key": "key",
+    }
     values.update(overrides)
     return Settings(**values)
 

@@ -7,6 +7,9 @@ class Settings(BaseSettings):
     gemini_api_key: str
     gemini_model: str = "gemini-3.1-flash-lite"
     vision_api_key: str
+    redis_url: str
+    supabase_url: str
+    supabase_service_role_key: str
     rate_limit_per_minute: int = 30
     max_image_bytes: int = 10 * 1024 * 1024
     max_image_dimension: int = 1600

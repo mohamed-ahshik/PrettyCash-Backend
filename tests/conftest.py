@@ -11,6 +11,9 @@ def settings() -> Settings:
         gemini_api_key="test-gemini-key",
         gemini_model="gemini-3.1-flash-lite",
         vision_api_key="test-vision-key",
+        redis_url="redis://localhost:6379/0",
+        supabase_url="https://example.supabase.co",
+        supabase_service_role_key="test-service-role-key",
         rate_limit_per_minute=30,
     )
 
