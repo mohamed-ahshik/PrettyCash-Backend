@@ -1,3 +1,5 @@
+import pytest
+
 from app.queue.base import Job
 from app.services.receipt import ReceiptDraft
 from app.workers.worker import process_job
@@ -8,9 +10,23 @@ class FakeAnalyzer:
         return ReceiptDraft(merchant="X", amount=1.0)
 
 
-def test_process_job_returns_draft():
-    analyzer = FakeAnalyzer()
-    job = Job(image_bytes=b"img", mime_type="image/jpeg")
-    draft = process_job(job, analyzer)
+class FailingAnalyzer:
+    def analyze(self, image_bytes: bytes, mime_type: str) -> ReceiptDraft:
+        raise RuntimeError("boom")
+
+
+def test_process_job_completes(job_store):
+    job = Job(job_id="job-1", image_base64="aGk=", mime_type="image/jpeg")
+    draft = process_job(job, FakeAnalyzer(), job_store)
     assert draft.merchant == "X"
-    assert draft.amount == 1.0
+    assert job_store.get("job-1")["status"] == "completed"
+    assert job_store.get("job-1")["result"]["merchant"] == "X"
+
+
+def test_process_job_fails_on_error(job_store):
+    job = Job(job_id="job-1", image_base64="aGk=", mime_type="image/jpeg")
+    with pytest.raises(RuntimeError):
+        process_job(job, FailingAnalyzer(), job_store)
+    assert job_store.get("job-1")["status"] == "failed"
+    assert job_store.get("job-1")["error_code"] == "INTERNAL"
+    assert job_store.get("job-1")["error_message"] == "Receipt analysis failed"

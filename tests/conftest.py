@@ -5,6 +5,35 @@ from app.core.config import Settings
 from app.main import create_app
 
 
+class FakeJobStore:
+    def __init__(self):
+        self.rows = {}
+        self.counter = 0
+
+    def create(self) -> str:
+        self.counter += 1
+        job_id = f"job-{self.counter}"
+        self.rows[job_id] = {"status": "pending"}
+        return job_id
+
+    def mark_processing(self, job_id: str) -> None:
+        self.rows.setdefault(job_id, {})["status"] = "processing"
+
+    def complete(self, job_id: str, result: dict) -> None:
+        self.rows[job_id] = {"status": "completed", "result": result}
+
+    def fail(self, job_id: str, code: str, message: str) -> None:
+        self.rows[job_id] = {"status": "failed", "error_code": code, "error_message": message}
+
+    def get(self, job_id: str) -> dict | None:
+        return self.rows.get(job_id)
+
+
+@pytest.fixture
+def job_store() -> FakeJobStore:
+    return FakeJobStore()
+
+
 @pytest.fixture
 def settings() -> Settings:
     return Settings(

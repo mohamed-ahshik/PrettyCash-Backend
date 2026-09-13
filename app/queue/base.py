@@ -1,13 +1,12 @@
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import Protocol
-from uuid import uuid4
 
 
 @dataclass
 class Job:
-    image_bytes: bytes
+    job_id: str
+    image_base64: str
     mime_type: str
-    id: str = field(default_factory=lambda: uuid4().hex)
 
 
 class TaskQueue(Protocol):
