@@ -19,6 +19,20 @@ class SupabaseJobStore:
             {"status": JobStatus.PROCESSING.value}
         ).eq("id", job_id).execute()
 
+    def record_classification(self, job_id: str, score: float, model: str) -> None:
+        self._client.table(self.TABLE).update(
+            {"classifier_score": score, "classifier_model": model}
+        ).eq("id", job_id).execute()
+
+    def reject(self, job_id: str, code: str, message: str) -> None:
+        self._client.table(self.TABLE).update(
+            {
+                "status": JobStatus.REJECTED.value,
+                "error_code": code,
+                "error_message": message,
+            }
+        ).eq("id", job_id).execute()
+
     def complete(self, job_id: str, result: dict[str, Any]) -> None:
         self._client.table(self.TABLE).update(
             {"status": JobStatus.COMPLETED.value, "result": result}

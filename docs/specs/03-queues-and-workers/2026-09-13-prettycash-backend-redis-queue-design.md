@@ -1,8 +1,40 @@
+---
+title: "Redis Queue and Supabase Job Store"
+type: spec
+status: implemented
+date: 2026-09-13
+section: queues-and-workers
+tags:
+  - prettycash
+  - spec
+  - queue
+  - workers
+  - redis
+  - supabase
+---
+
 # PrettyCash Backend — Dockerise with Redis Queue & Supabase Job Store (Design)
 
 **Date:** 2026-09-13
-**Status:** Approved for implementation
-**Implementation status:** Not started
+**Status:** Implemented
+**Implementation status:** Implemented
+
+---
+
+## Related
+
+- Architecture: [[ARCHITECTURE#7. Request and Data Flow|Request and Data Flow]], [[ARCHITECTURE#9. Data Storage|Data Storage]]
+- Section: [[QUEUES-AND-WORKERS]]
+- Plan: [[2026-09-13-prettycash-backend-redis-queue|Redis Queue implementation]]
+- Extends: [[2026-10-22-receipt-classification-design|Receipt Pre-Classification with Jev]]
+
+## Architecture Alignment
+
+- **Layers:** API enqueue target, queue, Supabase store, worker, Docker Compose.
+- **New boundaries:** `receipt:queue`, the Gemini worker, the `receipt_jobs` table, and Redis
+  rate limiting.
+- **Current → target:** implemented. The classifier design adds `receipt:classify` and a second
+  worker without changing this queue's contract.
 
 ---
 
@@ -120,6 +152,8 @@ create table if not exists receipt_jobs (
 ```
 
 - `status` values: `pending`, `processing`, `completed`, `failed`.
+  The classifier design extends this with `rejected`; see
+  [[2026-10-22-receipt-classification-design|Receipt Pre-Classification with Jev]].
 - `result` stores the normalized §5.4 `ReceiptDraft` shape; null until completed.
 - RLS not required for backend access: the backend uses the service-role key (bypasses RLS). Client apps never receive this key.
 

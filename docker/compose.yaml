@@ -12,6 +12,18 @@ services:
       redis:
         condition: service_healthy
 
+  classifier:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    command: ["python", "-m", "app.workers.classifier"]
+    env_file:
+      - ../.env
+    restart: unless-stopped
+    depends_on:
+      redis:
+        condition: service_healthy
+
   worker:
     build:
       context: ..

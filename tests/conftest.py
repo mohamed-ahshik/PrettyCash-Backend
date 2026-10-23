@@ -20,11 +20,22 @@ class FakeJobStore:
     def mark_processing(self, job_id: str) -> None:
         self.rows.setdefault(job_id, {})["status"] = "processing"
 
+    def record_classification(self, job_id: str, score: float, model: str) -> None:
+        row = self.rows.setdefault(job_id, {})
+        row["classifier_score"] = score
+        row["classifier_model"] = model
+
     def complete(self, job_id: str, result: dict) -> None:
         self.rows[job_id] = {"status": "completed", "result": result}
 
     def fail(self, job_id: str, code: str, message: str) -> None:
         self.rows[job_id] = {"status": "failed", "error_code": code, "error_message": message}
+
+    def reject(self, job_id: str, code: str, message: str) -> None:
+        row = self.rows.setdefault(job_id, {})
+        row.update(
+            {"status": "rejected", "error_code": code, "error_message": message}
+        )
 
     def get(self, job_id: str) -> dict | None:
         return self.rows.get(job_id)

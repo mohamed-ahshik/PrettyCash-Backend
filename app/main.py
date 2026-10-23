@@ -2,6 +2,7 @@ import logging
 
 from fastapi import FastAPI, Request
 from fastapi.exceptions import RequestValidationError
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from redis import Redis
 from starlette.exceptions import HTTPException as StarletteHTTPException
@@ -10,7 +11,7 @@ from app.api.v1.router import api_router
 from app.core.config import Settings, get_settings
 from app.core.errors import AppError, ErrorCode, InternalError
 from app.core.logging import configure_logging
-from app.queue.redis import RedisQueue
+from app.queue.redis import CLASSIFY_QUEUE, RedisQueue
 from app.services.ratelimit import RedisRateLimiter
 from app.store.base import JobStore
 from app.store.supabase import SupabaseJobStore
@@ -33,8 +34,16 @@ def create_app(
 
     app = FastAPI(title="PrettyCash Backend", version="0.1.0")
 
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=["*"],
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
+
     app.state.settings = settings
-    app.state.queue = RedisQueue(redis_client)
+    app.state.queue = RedisQueue(redis_client, CLASSIFY_QUEUE)
     app.state.rate_limiter = RedisRateLimiter(redis_client, settings.rate_limit_per_minute)
     app.state.job_store = job_store
 

@@ -36,6 +36,8 @@ async def analyze_receipt(
             job_id=job_id,
             image_base64=base64.b64encode(image_bytes).decode(),
             mime_type=mime_type,
+            auto_categorize=payload.autoCategorize,
+            categories=[category.model_dump() for category in payload.categories],
         )
     )
     return {"jobId": job_id, "status": "pending"}
@@ -58,6 +60,11 @@ def _to_status_response(row: dict) -> dict:
     if status == "completed":
         return {"status": status, "result": row["result"]}
     if status == "failed":
+        return {
+            "status": status,
+            "error": {"code": row["error_code"], "message": row["error_message"]},
+        }
+    if status == "rejected":
         return {
             "status": status,
             "error": {"code": row["error_code"], "message": row["error_message"]},

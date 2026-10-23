@@ -1,6 +1,35 @@
+---
+title: "Redis Queue and Supabase Job Store Implementation Plan"
+type: plan
+status: implemented
+date: 2026-09-13
+section: queues-and-workers
+tags:
+  - prettycash
+  - plan
+  - queue
+  - workers
+  - redis
+  - supabase
+---
+
 # PrettyCash Backend — Dockerise with Redis Queue & Supabase Job Store Implementation Plan
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+
+## Related
+
+- Spec: [[2026-09-13-prettycash-backend-redis-queue-design|Redis Queue and Supabase Job Store]]
+- Section: [[QUEUES-AND-WORKERS]]
+- Plans: [[QUEUES-AND-WORKERS-PLANS]]
+- Architecture: [[ARCHITECTURE#7. Request and Data Flow|Request and Data Flow]], [[ARCHITECTURE#9. Data Storage|Data Storage]]
+
+## Architecture Alignment
+
+- Adds the `receipt:queue` Redis list, the Gemini worker, and the `receipt_jobs` Supabase table.
+- Keeps queue transport in `app/queue/`, persistence in `app/store/`, and orchestration in
+  `app/workers/`.
+- Does not add the classifier queue or LiteLLM dependency; those are later specs.
 
 **Goal:** Make receipt analysis asynchronous (enqueue → jobId → poll), backed by Redis as the job queue and Supabase as the durable job-status/result store, all wired together with Docker Compose.
 
@@ -1269,7 +1298,7 @@ uv run ruff check .
 - `POST /api/v1/analyze-receipt` → `202 { "jobId", "status": "pending" }`
 - `GET /api/v1/jobs/{jobId}` → `{ status }` | `{ status, result }` | `{ status, error }`
 
-See `docs/superpowers/specs/` for the full contract.
+See `docs/specs/SPECS.md` for the full contract.
 
 ## Docker Compose
 
