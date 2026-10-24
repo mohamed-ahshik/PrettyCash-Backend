@@ -219,7 +219,8 @@ docker/
 └── compose.yaml
 supabase/migrations/
 ├── 0001_create_receipt_jobs.sql
-└── 0002_add_classifier_columns.sql # applied
+├── 0002_add_classifier_columns.sql # applied
+└── 0003_add_receipt_job_request_id.sql # applied as remote 20261024000001
 tests/
 AGENT.md                             # mandatory agent workflow (repo root)
 docs/
@@ -262,9 +263,12 @@ docs/
 2. Apply Redis rate limit (`RATE_LIMIT_PER_MINUTE`).
 3. Validate `{ image, autoCategorize?, categories? }` (categories max 50, description max 200).
 4. Decode, validate, apply EXIF orientation, downscale, re-encode JPEG.
-5. Create a `receipt_jobs` row with `status = pending`.
-6. Enqueue `{job_id, image_base64, mime_type, auto_categorize, categories}`.
-7. Return `202 {"jobId": "...", "status": "pending"}`.
+5. Read the optional `Idempotency-Key` header and create a `receipt_jobs` row with
+   `status = pending` and `request_id = key`; an existing key returns the existing row.
+6. Enqueue `{job_id, image_base64, mime_type, auto_categorize, categories}` only for a newly created
+   row.
+7. Return `202 {"jobId": "...", "status": "<current status>"}`; duplicate keys return the same
+   `jobId` and do not enqueue again.
 
 Queue: `receipt:classify`.
 
@@ -311,7 +315,7 @@ Returns the current Supabase row mapped to:
 | Endpoint | Auth | Behavior |
 |---|---|---|
 | `GET /api/v1/health` | No | `{"status":"ok"}` |
-| `POST /api/v1/analyze-receipt` | Bearer `VISION_API_KEY` | Validate image, create job, enqueue, `202` |
+| `POST /api/v1/analyze-receipt` | Bearer `VISION_API_KEY` | Validate image, create or reuse job, enqueue new jobs, `202` |
 | `GET /api/v1/jobs/{job_id}` | Bearer `VISION_API_KEY` | Return job status/result/error; `404` if unknown |
 
 `POST /api/v1/analyze-receipt` also accepts optional `autoCategorize` and `categories`:
@@ -329,6 +333,11 @@ Returns the current Supabase row mapped to:
 When Gemini makes a confident category decision, `result` may include `categoryId` and
 `categoryConfidence`. The frontend owns the profile toggle, category descriptions, the
 Uncategorized fallback, and the category UI.
+
+`POST /api/v1/analyze-receipt` accepts an optional `Idempotency-Key` header (1–128 characters). A
+repeated key returns the existing `jobId` and its current status, and does not enqueue the job
+again. Requests without the header keep the previous behavior. A header outside the length bounds
+returns `422 UNPROCESSABLE`.
 
 All non-2xx responses use:
 
@@ -358,6 +367,7 @@ Current columns:
 | `error_message` | text | Generic failure message |
 | `created_at` | timestamptz | Default now |
 | `updated_at` | timestamptz | Trigger-maintained |
+| `request_id` | text | Client `Idempotency-Key`; unique when present (migration `0003`) |
 
 Classifier columns (applied):
 
@@ -589,11 +599,13 @@ do not have separate spec folders yet.
 | Document | Type | Status | Architecture impact |
 |---|---|---|---|
 | `docs/specs/01-api/2026-09-13-prettycash-backend-receipt-analysis-design.md` | Spec | Implemented; Gemini transport migrated to LiteLLM | Initial API + Gemini extraction |
+| `docs/specs/01-api/2026-10-24-receipt-analysis-idempotency-design.md` | Spec | Implemented | `Idempotency-Key`, `request_id`, duplicate-job reuse |
 | `docs/specs/03-queues-and-workers/2026-09-13-prettycash-backend-redis-queue-design.md` | Spec | Implemented | Async queue + Supabase job store |
 | `docs/specs/02-ai-providers/2026-10-22-receipt-classification-design.md` | Spec | Implemented and verified | Classifier queue/worker, `rejected`, Jev score |
 | `docs/specs/02-ai-providers/2026-10-22-litellm-migration-design.md` | Spec | Implemented and verified | Provider calls via LiteLLM |
 | `docs/specs/02-ai-providers/2026-10-24-auto-categorization-design.md` | Spec | Implemented | Gemini category selection, queue fields, confidence threshold |
 | `docs/plans/01-api/2026-09-13-prettycash-backend-receipt-analysis.md` | Plan | Implemented | Initial API + Gemini extraction |
+| `docs/plans/01-api/2026-10-24-receipt-analysis-idempotency.md` | Plan | Implemented | `Idempotency-Key`, `request_id`, duplicate-job reuse |
 | `docs/plans/03-queues-and-workers/2026-09-13-prettycash-backend-redis-queue.md` | Plan | Implemented | Async queue + Supabase job store |
 | `docs/plans/02-ai-providers/2026-10-22-receipt-classification.md` | Plan | Implemented | Classifier queue/worker, `rejected`, Jev score |
 | `docs/plans/02-ai-providers/2026-10-22-litellm-migration.md` | Plan | Implemented | Provider calls via LiteLLM |
@@ -619,5 +631,6 @@ The frontend spec in the sibling repo is implemented; on-device manual checks ar
 | 2026-10-24 | Approved Gemini receipt auto-categorization (not implemented) | `2026-10-24-auto-categorization-design.md` |
 | 2026-10-24 | Implemented backend auto-categorization (queue fields, Gemini key/confidence, threshold); verified live | `2026-10-24-auto-categorization-design.md` |
 | 2026-10-24 | Implemented frontend auto-categorization (profile toggle, category payload, Uncategorized fallback, category edit); migration applied; on-device checks pending | Sibling `PrettyCash` auto-categorization spec |
+| 2026-10-24 | Added `Idempotency-Key` support, `receipt_jobs.request_id` unique index, and duplicate-job reuse; migration applied | `2026-10-24-receipt-analysis-idempotency-design.md` |
 
 Append a new row for every implemented architectural change. Do not rewrite history.

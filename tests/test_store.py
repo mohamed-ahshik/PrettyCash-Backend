@@ -1,3 +1,5 @@
+from postgrest.exceptions import APIError
+
 from app.store.base import JobStatus
 from app.store.supabase import SupabaseJobStore
 
@@ -27,7 +29,13 @@ class FakeQuery:
         self._client.calls.append(("eq", col, val))
         return self
 
+    def limit(self, count):
+        self._client.calls.append(("limit", count))
+        return self
+
     def execute(self):
+        if self._client.data_queue:
+            return FakeResponse(self._client.data_queue.pop(0))
         return FakeResponse(self._client.next_data)
 
 
@@ -35,17 +43,70 @@ class FakeSupabaseClient:
     def __init__(self):
         self.calls = []
         self.next_data = []
+        self.data_queue = []
 
     def table(self, name):
         return FakeQuery(self)
 
 
-def test_create_returns_id():
+class UniqueViolationQuery(FakeQuery):
+    def execute(self):
+        if self._client.calls[-1][0] == "insert":
+            raise APIError({"message": "duplicate key", "code": "23505"})
+        self._client.selects += 1
+        if self._client.selects == 1:
+            return FakeResponse([])
+        return FakeResponse([{"id": "winner"}])
+
+
+class UniqueViolationClient(FakeSupabaseClient):
+    def __init__(self):
+        super().__init__()
+        self.selects = 0
+
+    def table(self, name):
+        return UniqueViolationQuery(self)
+
+
+def test_create_returns_created_job():
     client = FakeSupabaseClient()
     client.next_data = [{"id": "abc"}]
     store = SupabaseJobStore(client)
-    assert store.create() == "abc"
+    result = store.create()
+    assert result.job_id == "abc"
+    assert result.created is True
     assert client.calls[0] == ("insert", {"status": JobStatus.PENDING.value})
+
+
+def test_create_with_existing_request_id_returns_existing_job():
+    client = FakeSupabaseClient()
+    client.next_data = [{"id": "existing"}]
+    store = SupabaseJobStore(client)
+    result = store.create("request-1")
+    assert result.job_id == "existing"
+    assert result.created is False
+    assert not any(call[0] == "insert" for call in client.calls)
+
+
+def test_create_with_new_request_id_inserts_request_id():
+    client = FakeSupabaseClient()
+    client.data_queue = [[], [{"id": "abc"}]]
+    store = SupabaseJobStore(client)
+    result = store.create("request-1")
+    assert result.job_id == "abc"
+    assert result.created is True
+    assert (
+        "insert",
+        {"status": JobStatus.PENDING.value, "request_id": "request-1"},
+    ) in client.calls
+
+
+def test_create_recovers_from_unique_violation():
+    client = UniqueViolationClient()
+    store = SupabaseJobStore(client)
+    result = store.create("request-1")
+    assert result.job_id == "winner"
+    assert result.created is False
 
 
 def test_mark_processing():
