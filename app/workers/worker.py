@@ -7,8 +7,9 @@ from redis import Redis
 
 from app.core.config import get_settings
 from app.core.errors import AppError, ErrorCode
+from app.core.logging import configure_logging
 from app.queue.base import Job, TaskQueue
-from app.queue.redis import RedisQueue
+from app.queue.redis import EXTRACT_QUEUE, RedisQueue
 from app.services.gemini import GeminiClient
 from app.services.receipt import ReceiptAnalyzer, ReceiptDraft
 from app.store.base import JobStore
@@ -28,7 +29,13 @@ def process_job(job: Job, analyzer: ReceiptAnalyzer, job_store: JobStore) -> Rec
     try:
         job_store.mark_processing(job.job_id)
         image_bytes = base64.b64decode(job.image_base64)
-        draft = analyzer.analyze(image_bytes, job.mime_type)
+        draft = analyzer.analyze(
+            image_bytes,
+            job.mime_type,
+            categories=job.categories,
+            auto_categorize=job.auto_categorize,
+            job_id=job.job_id,
+        )
     except Exception as exc:
         code, message = _to_error(exc)
         job_store.fail(job.job_id, code, message)
@@ -63,13 +70,16 @@ def run_worker(
 
 def main() -> None:
     settings = get_settings()
+    configure_logging(settings.log_level)
     redis_client = Redis.from_url(settings.redis_url, decode_responses=True)
-    queue = RedisQueue(redis_client)
+    queue = RedisQueue(redis_client, EXTRACT_QUEUE)
     job_store = SupabaseJobStore(
         create_client(settings.supabase_url, settings.supabase_service_role_key)
     )
     gemini = GeminiClient(settings.gemini_api_key, settings.gemini_model)
-    analyzer = ReceiptAnalyzer(gemini)
+    analyzer = ReceiptAnalyzer(
+        gemini, settings.receipt_category_confidence_threshold
+    )
     run_worker(queue, analyzer, job_store)
 
 

@@ -2,7 +2,7 @@ import base64
 import binascii
 import io
 
-from PIL import Image
+from PIL import Image, ImageOps
 
 from app.core.config import Settings
 from app.core.errors import InvalidImageError
@@ -35,6 +35,7 @@ def decode_and_process(base64_data: str, settings: Settings) -> tuple[bytes, str
     if image.format not in ALLOWED_FORMATS:
         raise InvalidImageError(f"Unsupported image format: {image.format}")
 
+    image = ImageOps.exif_transpose(image)
     image.thumbnail((settings.max_image_dimension, settings.max_image_dimension))
 
     if image.mode in ("RGBA", "LA", "P"):

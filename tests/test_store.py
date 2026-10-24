@@ -76,6 +76,34 @@ def test_fail_updates_error():
     )
 
 
+def test_record_classification_updates_score_and_model():
+    client = FakeSupabaseClient()
+    store = SupabaseJobStore(client)
+    store.record_classification("abc", 0.42, "typesafe/jev-1.14")
+    assert client.calls[0] == (
+        "update",
+        {"classifier_score": 0.42, "classifier_model": "typesafe/jev-1.14"},
+    )
+    assert client.calls[1] == ("eq", "id", "abc")
+
+
+def test_reject_updates_status_and_error():
+    client = FakeSupabaseClient()
+    store = SupabaseJobStore(client)
+    store.reject(
+        "abc", "NOT_A_RECEIPT", "This image doesn't look like a receipt or invoice."
+    )
+    assert client.calls[0] == (
+        "update",
+        {
+            "status": JobStatus.REJECTED.value,
+            "error_code": "NOT_A_RECEIPT",
+            "error_message": "This image doesn't look like a receipt or invoice.",
+        },
+    )
+    assert client.calls[1] == ("eq", "id", "abc")
+
+
 def test_get_returns_row_or_none():
     client = FakeSupabaseClient()
     store = SupabaseJobStore(client)

@@ -8,6 +8,7 @@ class ErrorCode(StrEnum):
     RATE_LIMITED = "RATE_LIMITED"
     INTERNAL = "INTERNAL"
     NOT_FOUND = "NOT_FOUND"
+    NOT_A_RECEIPT = "NOT_A_RECEIPT"
 
 
 class AppError(Exception):

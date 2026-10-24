@@ -1,6 +1,32 @@
+---
+title: "Receipt Analysis Service Implementation Plan"
+type: plan
+status: implemented
+date: 2026-09-13
+section: api
+tags:
+  - prettycash
+  - plan
+  - api
+  - gemini
+---
+
 # PrettyCash Backend — Receipt Analysis Service Implementation Plan
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+
+## Related
+
+- Spec: [[2026-09-13-prettycash-backend-receipt-analysis-design|Receipt Analysis Service]]
+- Section: [[API]]
+- Plans: [[API-PLANS]]
+- Architecture: [[ARCHITECTURE#8. API Contract|API Contract]], [[ARCHITECTURE#10. AI Provider Integrations|AI Provider Integrations]]
+
+## Architecture Alignment
+
+- Builds the HTTP layer, image service, Gemini provider client, queue seam, and worker entrypoint.
+- Keeps provider calls in `app/services/` and HTTP concerns in `app/api/`.
+- Does not create the classifier queue or LiteLLM dependency; those are later specs.
 
 **Goal:** Build a FastAPI backend that exposes `POST /api/v1/analyze-receipt`, authenticates callers with an API key, and uses the Gemini vision API to extract receipt data into the frontend's §5.4 JSON shape.
 
@@ -147,7 +173,7 @@ uv run ruff check .
 
 ## API
 
-`POST /api/v1/analyze-receipt` — see `docs/superpowers/specs/` for the full contract.
+`POST /api/v1/analyze-receipt` — see `docs/specs/SPECS.md` for the full contract.
 ```
 
 - [ ] **Step 6: Create empty `__init__.py` files**

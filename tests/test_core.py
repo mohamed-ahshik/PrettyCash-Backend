@@ -13,6 +13,7 @@ from app.core.errors import (
 
 def test_settings_defaults():
     s = Settings(
+        _env_file=None,
         gemini_api_key="g",
         vision_api_key="v",
         redis_url="redis://localhost:6379/0",
@@ -24,6 +25,11 @@ def test_settings_defaults():
     assert s.max_image_bytes == 10 * 1024 * 1024
     assert s.max_image_dimension == 1600
     assert s.redis_url == "redis://localhost:6379/0"
+    assert s.openrouter_jev_api_key == ""
+    assert s.openrouter_jev_model == "typesafe/jev-1.14"
+    assert s.receipt_classifier_threshold == 0.3
+    assert s.receipt_category_confidence_threshold == 0.7
+    assert s.openrouter_timeout_seconds == 5.0
 
 
 def test_app_error_carries_status_and_code():
@@ -46,6 +52,7 @@ def test_all_error_codes_exist():
         "RATE_LIMITED",
         "INTERNAL",
         "NOT_FOUND",
+        "NOT_A_RECEIPT",
     }
     assert InternalError().status_code == 500
     assert RateLimitedError().status_code == 429

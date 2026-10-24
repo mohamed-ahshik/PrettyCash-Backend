@@ -12,6 +12,7 @@ dependencies = [
     "pillow-heif>=0.18",
     "redis>=5.0",
     "supabase>=2.6",
+    "litellm>=1.106.2",
 ]
 
 [dependency-groups]

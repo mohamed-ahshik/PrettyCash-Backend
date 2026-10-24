@@ -7,6 +7,7 @@ class JobStatus(StrEnum):
     PROCESSING = "processing"
     COMPLETED = "completed"
     FAILED = "failed"
+    REJECTED = "rejected"
 
 
 class JobStore(Protocol):
@@ -14,8 +15,12 @@ class JobStore(Protocol):
 
     def mark_processing(self, job_id: str) -> None: ...
 
+    def record_classification(self, job_id: str, score: float, model: str) -> None: ...
+
     def complete(self, job_id: str, result: dict[str, Any]) -> None: ...
 
     def fail(self, job_id: str, code: str, message: str) -> None: ...
+
+    def reject(self, job_id: str, code: str, message: str) -> None: ...
 
     def get(self, job_id: str) -> dict[str, Any] | None: ...

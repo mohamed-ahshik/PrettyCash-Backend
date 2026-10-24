@@ -54,3 +54,16 @@ def test_rejects_oversized_image():
     settings = _settings(max_image_bytes=10)
     with pytest.raises(InvalidImageError):
         decode_and_process(_png_base64(), settings)
+
+
+def test_applies_exif_orientation():
+    img = Image.new("RGB", (200, 100), "red")
+    exif = Image.Exif()
+    exif[274] = 6
+    buf = io.BytesIO()
+    img.save(buf, format="JPEG", exif=exif)
+
+    data, _ = decode_and_process(base64.b64encode(buf.getvalue()).decode(), _settings())
+
+    out = Image.open(io.BytesIO(data))
+    assert out.size == (100, 200)

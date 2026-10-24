@@ -1,8 +1,39 @@
+---
+title: "Receipt Analysis Service"
+type: spec
+status: implemented
+date: 2026-09-13
+section: api
+tags:
+  - prettycash
+  - spec
+  - api
+  - gemini
+  - image
+---
+
 # PrettyCash Backend — Receipt Analysis Service (Design)
 
 **Date:** 2026-09-13
-**Status:** Approved for implementation
-**Implementation status:** Not started
+**Status:** Implemented
+**Implementation status:** Implemented; Gemini client section superseded by the LiteLLM design
+
+---
+
+## Related
+
+- Architecture: [[ARCHITECTURE#8. API Contract|API Contract]], [[ARCHITECTURE#10. AI Provider Integrations|AI Provider Integrations]]
+- Section: [[API]]
+- Plan: [[2026-09-13-prettycash-backend-receipt-analysis|Receipt Analysis implementation]]
+- Superseding design: [[2026-10-22-litellm-migration-design|Gemini and Jev via LiteLLM]]
+
+## Architecture Alignment
+
+- **Layers:** HTTP API, image processing service, Gemini provider client, queue seam, worker.
+- **Boundaries:** HTTP stays in `app/api/`; image and provider logic stay in `app/services/`; the
+  queue/worker seam is defined by `app/queue/` and `app/workers/`.
+- **Current → target:** implemented. The Gemini transport is superseded by the LiteLLM design;
+  the API contract and extraction schema remain.
 
 ---
 
@@ -151,6 +182,10 @@ Missing required config → app refuses to boot with a clear message.
 ---
 
 ## 7. Gemini Client
+
+> **Superseded implementation note:** The LiteLLM migration spec replaces this direct
+> REST client with `litellm.completion`. The model, prompt, schema fields, and validation behavior
+> remain the same; see `docs/specs/02-ai-providers/2026-10-22-litellm-migration-design.md`.
 
 `services/gemini.py`:
 - Calls `generativelanguage.googleapis.com` (REST) with `gemini-3.1-flash-lite`.

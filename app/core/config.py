@@ -1,5 +1,6 @@
 from functools import lru_cache
 
+from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -10,6 +11,11 @@ class Settings(BaseSettings):
     redis_url: str
     supabase_url: str
     supabase_service_role_key: str
+    openrouter_jev_api_key: str = ""
+    openrouter_jev_model: str = "typesafe/jev-1.14"
+    receipt_classifier_threshold: float = Field(default=0.3, ge=0.0, le=1.0)
+    receipt_category_confidence_threshold: float = Field(default=0.7, ge=0.0, le=1.0)
+    openrouter_timeout_seconds: float = Field(default=5.0, gt=0.0)
     rate_limit_per_minute: int = 30
     max_image_bytes: int = 10 * 1024 * 1024
     max_image_dimension: int = 1600
