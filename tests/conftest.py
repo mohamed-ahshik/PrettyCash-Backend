@@ -4,18 +4,24 @@ import pytest
 
 from app.core.config import Settings
 from app.main import create_app
+from app.store.base import CreatedJob
 
 
 class FakeJobStore:
     def __init__(self):
         self.rows = {}
+        self.request_ids = {}
         self.counter = 0
 
-    def create(self) -> str:
+    def create(self, request_id: str | None = None) -> CreatedJob:
+        if request_id and request_id in self.request_ids:
+            return CreatedJob(self.request_ids[request_id], False)
         self.counter += 1
         job_id = f"job-{self.counter}"
         self.rows[job_id] = {"status": "pending"}
-        return job_id
+        if request_id:
+            self.request_ids[request_id] = job_id
+        return CreatedJob(job_id, True)
 
     def mark_processing(self, job_id: str) -> None:
         self.rows.setdefault(job_id, {})["status"] = "processing"

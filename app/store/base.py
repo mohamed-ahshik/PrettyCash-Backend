@@ -1,3 +1,4 @@
+from dataclasses import dataclass
 from enum import StrEnum
 from typing import Any, Protocol
 
@@ -10,8 +11,14 @@ class JobStatus(StrEnum):
     REJECTED = "rejected"
 
 
+@dataclass(frozen=True)
+class CreatedJob:
+    job_id: str
+    created: bool
+
+
 class JobStore(Protocol):
-    def create(self) -> str: ...
+    def create(self, request_id: str | None = None) -> CreatedJob: ...
 
     def mark_processing(self, job_id: str) -> None: ...
 

@@ -1,6 +1,6 @@
 import base64
 
-from fastapi import APIRouter, Depends, Request
+from fastapi import APIRouter, Depends, Header, Request
 from starlette.concurrency import run_in_threadpool
 
 from app.api.deps import require_api_key, require_rate_limit
@@ -21,6 +21,9 @@ async def health() -> dict[str, str]:
 async def analyze_receipt(
     payload: AnalyzeReceiptRequest,
     request: Request,
+    idempotency_key: str | None = Header(
+        default=None, alias="Idempotency-Key", min_length=1, max_length=128
+    ),
     _token: str = Depends(require_rate_limit),
 ):
     settings = request.app.state.settings
@@ -30,17 +33,21 @@ async def analyze_receipt(
     image_bytes, mime_type = await run_in_threadpool(
         decode_and_process, payload.image.base64, settings
     )
-    job_id = job_store.create()
-    queue.enqueue(
-        Job(
-            job_id=job_id,
-            image_base64=base64.b64encode(image_bytes).decode(),
-            mime_type=mime_type,
-            auto_categorize=payload.autoCategorize,
-            categories=[category.model_dump() for category in payload.categories],
+    created = job_store.create(idempotency_key)
+    if created.created:
+        queue.enqueue(
+            Job(
+                job_id=created.job_id,
+                image_base64=base64.b64encode(image_bytes).decode(),
+                mime_type=mime_type,
+                auto_categorize=payload.autoCategorize,
+                categories=[category.model_dump() for category in payload.categories],
+            )
         )
-    )
-    return {"jobId": job_id, "status": "pending"}
+
+    row = job_store.get(created.job_id)
+    status = row["status"] if row else "pending"
+    return {"jobId": created.job_id, "status": status}
 
 
 @router.get(

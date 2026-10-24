@@ -18,10 +18,13 @@ Architecture: [[ARCHITECTURE#8. API Contract|API Contract]] · Specs: [[API]]
 
 - [[2026-09-13-prettycash-backend-receipt-analysis|Receipt Analysis implementation]] —
   implemented. Builds the API, image pipeline, and original Gemini extraction.
+- [[2026-10-24-receipt-analysis-idempotency|Receipt Analysis Idempotency implementation]] —
+  implemented. Adds the API key header, store lookup, and migration.
 
 ## Related
 
 - [[2026-09-13-prettycash-backend-receipt-analysis-design|Receipt Analysis Spec]]
+- [[2026-10-24-receipt-analysis-idempotency-design|Receipt Analysis Idempotency Spec]]
 - [[AI-PROVIDERS-PLANS]]
 - [[QUEUES-AND-WORKERS-PLANS]]
 - [[PLANS]]

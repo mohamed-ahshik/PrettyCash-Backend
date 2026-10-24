@@ -1,6 +1,8 @@
 from typing import Any
 
-from app.store.base import JobStatus
+from postgrest.exceptions import APIError
+
+from app.store.base import CreatedJob, JobStatus
 from supabase import Client
 
 
@@ -10,9 +12,34 @@ class SupabaseJobStore:
     def __init__(self, client: Client) -> None:
         self._client = client
 
-    def create(self) -> str:
-        res = self._client.table(self.TABLE).insert({"status": JobStatus.PENDING.value}).execute()
-        return res.data[0]["id"]
+    def create(self, request_id: str | None = None) -> CreatedJob:
+        if request_id:
+            existing = self._find_by_request_id(request_id)
+            if existing:
+                return CreatedJob(existing, False)
+
+        payload: dict[str, Any] = {"status": JobStatus.PENDING.value}
+        if request_id:
+            payload["request_id"] = request_id
+        try:
+            res = self._client.table(self.TABLE).insert(payload).execute()
+        except APIError as exc:
+            if request_id and exc.code == "23505":
+                existing = self._find_by_request_id(request_id)
+                if existing:
+                    return CreatedJob(existing, False)
+            raise
+        return CreatedJob(res.data[0]["id"], True)
+
+    def _find_by_request_id(self, request_id: str) -> str | None:
+        res = (
+            self._client.table(self.TABLE)
+            .select("id")
+            .eq("request_id", request_id)
+            .limit(1)
+            .execute()
+        )
+        return res.data[0]["id"] if res.data else None
 
     def mark_processing(self, job_id: str) -> None:
         self._client.table(self.TABLE).update(

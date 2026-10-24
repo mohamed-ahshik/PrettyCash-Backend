@@ -90,7 +90,7 @@ async def test_get_job_pending(client):
 
 
 async def test_get_job_completed(client, job_store):
-    job_id = job_store.create()
+    job_id = job_store.create().job_id
     job_store.complete(
         job_id,
         {"merchant": "Whole Foods", "amount": 42.75, "note": "", "items": []},
@@ -104,7 +104,7 @@ async def test_get_job_completed(client, job_store):
 
 
 async def test_get_job_failed(client, job_store):
-    job_id = job_store.create()
+    job_id = job_store.create().job_id
     job_store.fail(job_id, "INTERNAL", "Receipt analysis failed")
     response = await client.get(f"/api/v1/jobs/{job_id}", headers=AUTH)
     assert response.status_code == 200
@@ -212,6 +212,71 @@ async def test_analyze_receipt_enqueues_category_fields(job_store):
     assert payload["categories"] == categories
 
 
+async def test_analyze_receipt_is_idempotent_with_key(job_store):
+    redis_client = fakeredis.FakeRedis(decode_responses=True)
+    app = create_app(
+        Settings(
+            gemini_api_key="g",
+            vision_api_key="test-vision-key",
+            redis_url="redis://localhost:6379/0",
+            supabase_url="https://example.supabase.co",
+            supabase_service_role_key="key",
+        ),
+        job_store=job_store,
+        redis_client=redis_client,
+    )
+    headers = {**AUTH, "Idempotency-Key": "request-1"}
+    transport = httpx.ASGITransport(app=app)
+    async with httpx.AsyncClient(transport=transport, base_url="http://test") as c:
+        first = await c.post("/api/v1/analyze-receipt", json=_payload(), headers=headers)
+        second = await c.post("/api/v1/analyze-receipt", json=_payload(), headers=headers)
+
+    assert first.status_code == 202
+    assert second.status_code == 202
+    assert first.json()["jobId"] == second.json()["jobId"]
+    assert second.json()["status"] == "pending"
+    assert len(job_store.rows) == 1
+    assert redis_client.llen("receipt:classify") == 1
+
+
+async def test_analyze_receipt_without_key_creates_two_jobs(client, job_store):
+    first = await client.post("/api/v1/analyze-receipt", json=_payload(), headers=AUTH)
+    second = await client.post("/api/v1/analyze-receipt", json=_payload(), headers=AUTH)
+
+    assert first.status_code == 202
+    assert second.status_code == 202
+    assert first.json()["jobId"] != second.json()["jobId"]
+    assert len(job_store.rows) == 2
+
+
+async def test_analyze_receipt_rejects_long_idempotency_key(client):
+    response = await client.post(
+        "/api/v1/analyze-receipt",
+        json=_payload(),
+        headers={**AUTH, "Idempotency-Key": "x" * 129},
+    )
+
+    assert response.status_code == 422
+    assert response.json()["error"]["code"] == "UNPROCESSABLE"
+
+
+async def test_analyze_receipt_duplicate_key_returns_current_status(client, job_store):
+    headers = {**AUTH, "Idempotency-Key": "request-2"}
+    first = await client.post("/api/v1/analyze-receipt", json=_payload(), headers=headers)
+    job_id = first.json()["jobId"]
+    job_store.complete(
+        job_id,
+        {"merchant": "Whole Foods", "amount": 42.75, "note": "", "items": []},
+    )
+
+    second = await client.post("/api/v1/analyze-receipt", json=_payload(), headers=headers)
+
+    assert second.status_code == 202
+    assert second.json()["jobId"] == job_id
+    assert second.json()["status"] == "completed"
+    assert len(job_store.rows) == 1
+
+
 async def test_analyze_receipt_rejects_too_many_categories(client):
     response = await client.post(
         "/api/v1/analyze-receipt",
@@ -260,7 +325,7 @@ async def test_analyze_receipt_rejects_long_category_name(client):
 
 
 async def test_get_job_rejected(client, job_store):
-    job_id = job_store.create()
+    job_id = job_store.create().job_id
     job_store.record_classification(job_id, 0.05, "typesafe/jev-1.14")
     job_store.reject(
         job_id,

@@ -40,6 +40,8 @@ uv run ruff check .
 ## API
 
 - `POST /api/v1/analyze-receipt` → `202 { "jobId", "status": "pending" }`
+- Send an optional `Idempotency-Key` header (1–128 characters) to make retries reuse the same job;
+  a repeated key returns the existing job and does not enqueue it again.
 - The request may also include optional `autoCategorize` + `categories` (expense categories with
   `id`, `name`, and `description`).
 - `GET /api/v1/jobs/{jobId}` → `{ status }` | `{ status, result }` | `{ status, error }`
