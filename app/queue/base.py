@@ -9,6 +9,7 @@ class Job:
     mime_type: str
     auto_categorize: bool = False
     categories: list[dict[str, str]] = field(default_factory=list)
+    user_id: str | None = None
 
 
 class TaskQueue(Protocol):

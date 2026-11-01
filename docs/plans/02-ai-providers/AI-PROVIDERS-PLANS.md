@@ -27,6 +27,8 @@ Specs: [[AI-PROVIDERS]]
 - [[2026-09-13-prettycash-backend-receipt-analysis|Receipt Analysis implementation]] — implemented.
 - [[2026-10-24-auto-categorization|Auto-categorization implementation]] — implemented; backend
   verified live and frontend integrated.
+- [[2026-10-31-posthog-llm-observability|PostHog LLM observability implementation]] — implemented;
+  job-only attribution, disabled by default.
 
 ## Related
 

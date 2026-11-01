@@ -1,8 +1,10 @@
 import base64
 import io
+from collections.abc import Callable
 
 from PIL import Image, ImageOps
 
+from app.services.analytics import LLMCallRecord
 from app.services.jev import ClassificationResult, ClassifierUnavailable, JevClient
 
 MIN_SIDE = 256
@@ -14,8 +16,15 @@ class ReceiptClassifier:
     def __init__(self, jev: JevClient) -> None:
         self._jev = jev
 
-    def classify(self, image_bytes: bytes) -> ClassificationResult:
-        return self._jev.classify(self._to_jev_base64(image_bytes))
+    def classify(
+        self,
+        image_bytes: bytes,
+        on_call: Callable[[LLMCallRecord], None] | None = None,
+    ) -> ClassificationResult:
+        return self._jev.classify(
+            self._to_jev_base64(image_bytes),
+            on_call=on_call,
+        )
 
     def _to_jev_base64(self, image_bytes: bytes) -> str:
         try:

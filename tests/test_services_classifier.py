@@ -11,9 +11,11 @@ from app.services.jev import ClassificationResult, ClassifierUnavailable
 class FakeJev:
     def __init__(self):
         self.image_base64 = None
+        self.on_call = None
 
-    def classify(self, image_base64: str) -> ClassificationResult:
+    def classify(self, image_base64: str, on_call=None) -> ClassificationResult:
         self.image_base64 = image_base64
+        self.on_call = on_call
         return ClassificationResult(noul=0.9, model="typesafe/jev-1.14")
 
 
@@ -43,6 +45,16 @@ def test_skips_images_outside_jev_size_window(size):
         ReceiptClassifier(jev).classify(_image_bytes(size))
 
     assert jev.image_base64 is None
+
+
+def test_passes_analytics_callback_to_jev():
+    jev = FakeJev()
+    def callback(record):
+        return None
+
+    ReceiptClassifier(jev).classify(_image_bytes(), on_call=callback)
+
+    assert jev.on_call is callback
 
 
 def test_encodes_jpeg_data():

@@ -106,6 +106,7 @@ Current external AI calls:
 
 - Gemini: `litellm.completion` from `app/services/gemini.py`.
 - Jev: `litellm.systemone` from `app/services/jev.py`, with the image embedded in `state`.
+- PostHog: workers emit `$ai_generation` through `app/services/analytics.py` when enabled.
 
 Current queues:
 
@@ -130,6 +131,7 @@ The backend also accepts optional scan categories and may return `categoryId` /
 | Receipt pre-classification with Jev | `docs/specs/02-ai-providers/2026-10-22-receipt-classification-design.md` | Implemented |
 | LiteLLM provider migration | `docs/specs/02-ai-providers/2026-10-22-litellm-migration-design.md` | Implemented |
 | Gemini receipt auto-categorization | `docs/specs/02-ai-providers/2026-10-24-auto-categorization-design.md` | Implemented |
+| LLM observability with PostHog | `docs/specs/02-ai-providers/2026-10-31-posthog-llm-observability-design.md` | Implemented (job-only attribution; PostHog disabled by default) |
 
 The auto-categorization frontend integration is implemented in the sibling repo:
 `PrettyCash/docs/superpowers/specs/2026-10-24-auto-categorization-design.md`.
@@ -205,6 +207,7 @@ app/
 │   ├── gemini.py                   # Gemini provider client (LiteLLM completion)
 │   ├── jev.py                      # Jev provider client (LiteLLM systemone)
 │   ├── classifier.py               # Image normalization + Jev classification
+│   ├── analytics.py                # PostHog LLM observability + safe capture
 │   ├── image.py                    # base64 decode, validation, EXIF, downscale
 │   ├── ratelimit.py                # Redis rate-limit logic
 │   └── receipt.py                  # ReceiptDraft + ReceiptAnalyzer
@@ -230,12 +233,14 @@ docs/
 │   ├── SPECS.md                    # specs map of content
 │   ├── 01-api/
 │   │   ├── API.md                  # API section MOC
-│   │   └── 2026-09-13-prettycash-backend-receipt-analysis-design.md
+│   │   ├── 2026-09-13-prettycash-backend-receipt-analysis-design.md
+│   │   └── 2026-10-24-receipt-analysis-idempotency-design.md
 │   ├── 02-ai-providers/
 │   │   ├── AI-PROVIDERS.md         # AI section MOC
 │   │   ├── 2026-10-22-receipt-classification-design.md
 │   │   ├── 2026-10-22-litellm-migration-design.md
-│   │   └── 2026-10-24-auto-categorization-design.md
+│   │   ├── 2026-10-24-auto-categorization-design.md
+│   │   └── 2026-10-31-posthog-llm-observability-design.md
 │   └── 03-queues-and-workers/
 │       ├── QUEUES-AND-WORKERS.md   # queue section MOC
 │       └── 2026-09-13-prettycash-backend-redis-queue-design.md
@@ -243,11 +248,14 @@ docs/
     ├── PLANS.md                    # plans map of content
     ├── 01-api/
     │   ├── API-PLANS.md
-    │   └── 2026-09-13-prettycash-backend-receipt-analysis.md
+    │   ├── 2026-09-13-prettycash-backend-receipt-analysis.md
+    │   └── 2026-10-24-receipt-analysis-idempotency.md
     ├── 02-ai-providers/
     │   ├── AI-PROVIDERS-PLANS.md
     │   ├── 2026-10-22-receipt-classification.md
-    │   └── 2026-10-22-litellm-migration.md
+    │   ├── 2026-10-22-litellm-migration.md
+    │   ├── 2026-10-24-auto-categorization.md
+    │   └── 2026-10-31-posthog-llm-observability.md
     └── 03-queues-and-workers/
         ├── QUEUES-AND-WORKERS-PLANS.md
         └── 2026-09-13-prettycash-backend-redis-queue.md
@@ -448,6 +456,21 @@ Not configured. LiteLLM's `completion` supports fallbacks, but `systemone` does 
 fallbacks can use `completion(fallbacks=[...])`; future Jev fallbacks need a Router or a custom
 wrapper. Any fallback design must be a separate spec.
 
+### 10.5 LLM observability (PostHog)
+
+- Transport: `posthog` Python client, server-side only.
+- One `$ai_generation` event per real Gemini/Jev call, emitted by the worker.
+- Events include provider, model, token counts, cost/source, latency, success/error, job ID,
+  `auto_categorize`, and environment.
+- Cost: LiteLLM hidden/response cost first, then model price table, then `null`; never silently 0.
+- No receipt image, prompt, OCR, merchant, amount, or item values are sent.
+- `receipt_job_id` is the trace/session ID. `user_id` is null and `attribution="job_only"` until JWT
+  auth provides a user ID.
+- Analytics is disabled by default; missing key or `POSTHOG_ENABLED=false` is a no-op.
+- PostHog failures are logged and never fail a scan.
+- The frontend synthetic `$ai_generation` event was removed.
+- Owner: `app/services/analytics.py`; instrumented in both workers/provider clients.
+
 ---
 
 ## 11. Configuration
@@ -469,10 +492,15 @@ wrapper. Any fallback design must be a separate spec.
 | `RECEIPT_CLASSIFIER_THRESHOLD` | `0.3` | No | Jev decision |
 | `OPENROUTER_TIMEOUT_SECONDS` | `5.0` | No | Jev timeout |
 | `RECEIPT_CATEGORY_CONFIDENCE_THRESHOLD` | `0.7` | No | Gemini category decision |
+| `POSTHOG_ENABLED` | `false` | No | LLM observability |
+| `POSTHOG_PROJECT_API_KEY` | empty | No | PostHog server key |
+| `POSTHOG_HOST` | `https://us.i.posthog.com` | No | PostHog host |
+| `ENVIRONMENT` | `development` | No | PostHog event property |
 
 > `OPENROUTER_JEV_API_KEY`, `OPENROUTER_JEV_MODEL`, `RECEIPT_CLASSIFIER_THRESHOLD`,
-> `OPENROUTER_TIMEOUT_SECONDS`, and `RECEIPT_CATEGORY_CONFIDENCE_THRESHOLD` are implemented in
-> `app/core/config.py`. The LiteLLM migration adds no environment variables.
+> `OPENROUTER_TIMEOUT_SECONDS`, `RECEIPT_CATEGORY_CONFIDENCE_THRESHOLD`, and the PostHog settings
+> are implemented in `app/core/config.py`. PostHog is disabled unless `POSTHOG_ENABLED=true` and a
+> project API key are present.
 
 Rules:
 
@@ -508,6 +536,9 @@ Rules:
 - Auto-categorization was verified live: a Food receipt returned `categoryId=cat-food` /
   confidence `1.0`; a bookstore receipt with no matching category returned no `categoryId`; an API
   scan with `autoCategorize: false` returned no category fields.
+- PostHog tests use an injected fake client and assert the `$ai_generation` payload, cost/token
+  extraction, error events, no receipt content, and failure isolation. Real Gemini/Jev calls were
+  verified to produce usage/cost metadata; no live PostHog project key is configured locally.
 
 Every behavior change needs a test at its layer. Worker tests use fake services; API tests do not
 call real Redis/Supabase/providers.
@@ -562,11 +593,13 @@ changes with the spec, not after the fact.
 | API schema imports `ReceiptDraft` from a provider-coupled service | API loads service module; future tight coupling | Move shared schemas to a dedicated module |
 | Remote migration history does not match local versions | `supabase db push` refuses until reconciled | `supabase db pull` or `supabase migration repair` |
 | No retries/dead-letter queue | Provider failures end as `failed` | Future reliability spec |
-| No metrics/dashboards | Only logs | Future observability spec |
+| No general application metrics/dashboards | PostHog has LLM events only | Future observability spec |
 | One Gemini worker | Serial extraction throughput | Scale or add workers when needed |
 | Migrations are manual | Deployment can drift from code | Add a migration step/runbook |
 | Keys may remain in git history | Credential exposure | Rotate keys independently of the file cleanup |
 | Frontend auto-categorization on-device verification is pending | Automated frontend/backend coverage passes | Run the sibling spec §11.2 checklist |
+| PostHog user attribution is job-only | No per-user cost attribution until JWT auth | Subscription/API-auth spec |
+| PostHog is disabled by default | No production events until configured | Set `POSTHOG_ENABLED=true` and a project key |
 
 ---
 
@@ -604,14 +637,18 @@ do not have separate spec folders yet.
 | `docs/specs/02-ai-providers/2026-10-22-receipt-classification-design.md` | Spec | Implemented and verified | Classifier queue/worker, `rejected`, Jev score |
 | `docs/specs/02-ai-providers/2026-10-22-litellm-migration-design.md` | Spec | Implemented and verified | Provider calls via LiteLLM |
 | `docs/specs/02-ai-providers/2026-10-24-auto-categorization-design.md` | Spec | Implemented | Gemini category selection, queue fields, confidence threshold |
+| `docs/specs/02-ai-providers/2026-10-31-posthog-llm-observability-design.md` | Spec | Implemented (job-only attribution) | `$ai_generation` events, usage/cost, latency, failure isolation |
 | `docs/plans/01-api/2026-09-13-prettycash-backend-receipt-analysis.md` | Plan | Implemented | Initial API + Gemini extraction |
 | `docs/plans/01-api/2026-10-24-receipt-analysis-idempotency.md` | Plan | Implemented | `Idempotency-Key`, `request_id`, duplicate-job reuse |
 | `docs/plans/03-queues-and-workers/2026-09-13-prettycash-backend-redis-queue.md` | Plan | Implemented | Async queue + Supabase job store |
 | `docs/plans/02-ai-providers/2026-10-22-receipt-classification.md` | Plan | Implemented | Classifier queue/worker, `rejected`, Jev score |
 | `docs/plans/02-ai-providers/2026-10-22-litellm-migration.md` | Plan | Implemented | Provider calls via LiteLLM |
 | `docs/plans/02-ai-providers/2026-10-24-auto-categorization.md` | Plan | Implemented | Gemini category selection, queue fields, confidence threshold |
+| `docs/plans/02-ai-providers/2026-10-31-posthog-llm-observability.md` | Plan | Implemented | `$ai_generation` events, usage/cost, latency, failure isolation |
 
-The frontend spec in the sibling repo is implemented; on-device manual checks are outstanding:
+The frontend synthetic `$ai_generation` event was removed as part of the PostHog observability
+implementation. The frontend auto-categorization spec in the sibling repo is implemented; on-device
+manual checks are outstanding:
 `PrettyCash/docs/superpowers/specs/2026-10-24-auto-categorization-design.md`.
 
 ---
@@ -632,5 +669,6 @@ The frontend spec in the sibling repo is implemented; on-device manual checks ar
 | 2026-10-24 | Implemented backend auto-categorization (queue fields, Gemini key/confidence, threshold); verified live | `2026-10-24-auto-categorization-design.md` |
 | 2026-10-24 | Implemented frontend auto-categorization (profile toggle, category payload, Uncategorized fallback, category edit); migration applied; on-device checks pending | Sibling `PrettyCash` auto-categorization spec |
 | 2026-10-24 | Added `Idempotency-Key` support, `receipt_jobs.request_id` unique index, and duplicate-job reuse; migration applied | `2026-10-24-receipt-analysis-idempotency-design.md` |
+| 2026-10-31 | Implemented PostHog `$ai_generation` observability for Gemini/Jev with job-only attribution; removed frontend synthetic event | `2026-10-31-posthog-llm-observability-design.md` |
 
 Append a new row for every implemented architectural change. Do not rewrite history.

@@ -2,6 +2,7 @@ import pytest
 
 from app.queue.base import Job
 from app.queue.sync import SyncQueue
+from app.services.analytics import LLMCallRecord
 from app.services.jev import ClassificationResult, ClassifierUnavailable
 from app.workers.classifier import NOT_A_RECEIPT_MESSAGE, process_job
 
@@ -11,7 +12,7 @@ class FakeClassifier:
         self.noul = noul
         self.error = error
 
-    def classify(self, image_bytes: bytes) -> ClassificationResult:
+    def classify(self, image_bytes: bytes, on_call=None) -> ClassificationResult:
         if self.error is not None:
             raise self.error
         return ClassificationResult(noul=self.noul, model="typesafe/jev-1.14")
@@ -133,6 +134,7 @@ def test_process_job_forwards_category_fields(job_store):
         mime_type="image/jpeg",
         auto_categorize=True,
         categories=[{"id": "cat-food", "name": "Food", "description": "Groceries"}],
+        user_id="user-1",
     )
 
     result = process_job(job, FakeClassifier(noul=0.9), extract, job_store, threshold=0.3)
@@ -144,6 +146,64 @@ def test_process_job_forwards_category_fields(job_store):
     assert forwarded.categories == [
         {"id": "cat-food", "name": "Food", "description": "Groceries"}
     ]
+    assert forwarded.user_id == "user-1"
+
+
+class FakeAnalytics:
+    def __init__(self):
+        self.calls = []
+
+    def capture_generation(self, record, **kwargs):
+        self.calls.append((record, kwargs))
+
+
+class EmittingClassifier:
+    def classify(self, image_bytes, on_call=None):
+        if on_call is not None:
+            on_call(
+                LLMCallRecord(
+                    model="openrouter/typesafe/jev-1.14",
+                    provider="openrouter",
+                    input_tokens=10,
+                    output_tokens=1,
+                    total_tokens=11,
+                    cost_usd=0.0001,
+                    cost_source="litellm",
+                    latency_seconds=0.3,
+                )
+            )
+        return ClassificationResult(noul=0.9, model="typesafe/jev-1.14")
+
+
+def test_process_job_emits_classification_event(job_store):
+    extract = SyncQueue()
+    job = Job(
+        job_id="job-1",
+        image_base64="aGk=",
+        mime_type="image/jpeg",
+        auto_categorize=True,
+        user_id="user-1",
+    )
+    analytics = FakeAnalytics()
+
+    process_job(
+        job,
+        EmittingClassifier(),
+        extract,
+        job_store,
+        threshold=0.3,
+        analytics=analytics,
+    )
+
+    assert len(analytics.calls) == 1
+    record, kwargs = analytics.calls[0]
+    assert record.provider == "openrouter"
+    assert kwargs == {
+        "job_id": "job-1",
+        "span_name": "receipt_classification",
+        "user_id": "user-1",
+        "auto_categorize": True,
+    }
 
 
 def test_record_failure_does_not_change_routing_to_reject():

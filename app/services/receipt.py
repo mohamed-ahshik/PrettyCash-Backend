@@ -1,11 +1,13 @@
 import base64
 import logging
 import math
+from collections.abc import Callable
 from typing import Any
 
 from pydantic import BaseModel, Field, ValidationError
 
 from app.core.errors import UnprocessableError
+from app.services.analytics import LLMCallRecord
 from app.services.gemini import GeminiClient
 
 logger = logging.getLogger(__name__)
@@ -53,6 +55,7 @@ class ReceiptAnalyzer:
         categories: list[dict[str, str]] | None = None,
         auto_categorize: bool = False,
         job_id: str | None = None,
+        on_llm_call: Callable[[LLMCallRecord], None] | None = None,
     ) -> ReceiptDraft:
         keyed_categories: list[dict[str, str]] = []
         if auto_categorize and categories:
@@ -71,6 +74,7 @@ class ReceiptAnalyzer:
             image_base64,
             mime_type,
             categories=keyed_categories,
+            on_call=on_llm_call,
         )
         return self._normalize(raw, keyed_categories, job_id)
 

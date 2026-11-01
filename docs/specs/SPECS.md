@@ -20,7 +20,7 @@ note and from the section MOC below.
 
 - `01-api/` — [[API]] — HTTP contract, inbound auth, image validation, initial receipt analysis.
 - `02-ai-providers/` — [[AI-PROVIDERS]] — Gemini extraction, Jev classification, LiteLLM migration,
-  and auto-categorization.
+  auto-categorization, and PostHog LLM observability.
 - `03-queues-and-workers/` — [[QUEUES-AND-WORKERS]] — Redis queues, worker topology, job lifecycle,
   and storage changes.
 
