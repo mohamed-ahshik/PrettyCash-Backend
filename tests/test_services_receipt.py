@@ -14,6 +14,7 @@ class FakeGemini:
         image_base64: str,
         mime_type: str,
         categories: list[dict[str, str]] | None = None,
+        on_call=None,
     ) -> dict:
         self.categories = categories
         return self.payload

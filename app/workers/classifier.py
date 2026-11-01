@@ -10,6 +10,7 @@ from app.core.errors import ErrorCode
 from app.core.logging import configure_logging
 from app.queue.base import Job, TaskQueue
 from app.queue.redis import CLASSIFY_QUEUE, EXTRACT_QUEUE, RedisQueue
+from app.services.analytics import Analytics, PostHogAnalytics
 from app.services.classifier import ReceiptClassifier
 from app.services.jev import ClassifierUnavailable, JevClient
 from app.store.base import JobStore
@@ -47,9 +48,21 @@ def process_job(
     extract_queue: TaskQueue,
     job_store: JobStore,
     threshold: float,
+    analytics: Analytics | None = None,
 ) -> bool:
     started = time.monotonic()
     job_store.mark_processing(job.job_id)
+
+    on_llm_call = None
+    if analytics is not None:
+        def on_llm_call(record):
+            analytics.capture_generation(
+                record,
+                job_id=job.job_id,
+                span_name="receipt_classification",
+                user_id=job.user_id,
+                auto_categorize=job.auto_categorize,
+            )
 
     try:
         image_bytes = base64.b64decode(job.image_base64)
@@ -59,7 +72,7 @@ def process_job(
         return _forward(job, extract_queue, job_store)
 
     try:
-        result = classifier.classify(image_bytes)
+        result = classifier.classify(image_bytes, on_call=on_llm_call)
     except ClassifierUnavailable as exc:
         _log_fallback(job.job_id, str(exc), started)
         return _forward(job, extract_queue, job_store)
@@ -103,6 +116,7 @@ def run_worker(
     classifier: ReceiptClassifier,
     job_store: JobStore,
     threshold: float,
+    analytics: Analytics | None = None,
     stop_event: threading.Event | None = None,
     poll_interval: float = 1.0,
 ) -> None:
@@ -117,7 +131,14 @@ def run_worker(
             time.sleep(poll_interval)
             continue
         try:
-            process_job(job, classifier, extract_queue, job_store, threshold)
+            process_job(
+                job,
+                classifier,
+                extract_queue,
+                job_store,
+                threshold,
+                analytics,
+            )
             logger.info("Classified job %s", job.job_id)
         except Exception:
             logger.exception("Failed to classify job %s", job.job_id)
@@ -143,13 +164,18 @@ def main() -> None:
         timeout=settings.openrouter_timeout_seconds,
     )
     classifier = ReceiptClassifier(jev)
-    run_worker(
-        queue,
-        extract_queue,
-        classifier,
-        job_store,
-        settings.receipt_classifier_threshold,
-    )
+    analytics = PostHogAnalytics.from_settings(settings)
+    try:
+        run_worker(
+            queue,
+            extract_queue,
+            classifier,
+            job_store,
+            settings.receipt_classifier_threshold,
+            analytics,
+        )
+    finally:
+        analytics.flush()
 
 
 if __name__ == "__main__":

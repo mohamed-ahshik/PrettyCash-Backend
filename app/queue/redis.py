@@ -19,6 +19,7 @@ class RedisQueue:
                 "mime_type": job.mime_type,
                 "auto_categorize": job.auto_categorize,
                 "categories": job.categories,
+                "user_id": job.user_id,
             }
         )
         self._redis.lpush(self._queue_key, payload)
@@ -34,6 +35,7 @@ class RedisQueue:
             mime_type=data["mime_type"],
             auto_categorize=bool(data.get("auto_categorize", False)),
             categories=data.get("categories") or [],
+            user_id=data.get("user_id"),
         )
 
     def size(self) -> int:

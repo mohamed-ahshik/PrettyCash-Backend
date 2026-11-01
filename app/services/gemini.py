@@ -1,9 +1,14 @@
 import json
+import logging
+import time
 from collections.abc import Callable
 from copy import deepcopy
 from typing import Any
 
 from app.core.errors import InternalError
+from app.services.analytics import LLMCallRecord, build_call_record
+
+logger = logging.getLogger(__name__)
 
 RECEIPT_RESPONSE_SCHEMA = {
     "type": "object",
@@ -97,6 +102,18 @@ def _default_completion(**kwargs: Any) -> Any:
     return completion(**kwargs)
 
 
+def _emit(
+    on_call: Callable[[LLMCallRecord], None] | None,
+    record: LLMCallRecord,
+) -> None:
+    if on_call is None:
+        return
+    try:
+        on_call(record)
+    except Exception:
+        logger.warning("LLM analytics callback failed; continuing", exc_info=True)
+
+
 class GeminiClient:
     def __init__(
         self,
@@ -115,7 +132,9 @@ class GeminiClient:
         image_base64: str,
         mime_type: str,
         categories: list[dict[str, str]] | None = None,
+        on_call: Callable[[LLMCallRecord], None] | None = None,
     ) -> dict:
+        started = time.perf_counter()
         try:
             response = self._completion(
                 model=self._model,
@@ -141,12 +160,43 @@ class GeminiClient:
                 },
             )
         except Exception as exc:
+            _emit(
+                on_call,
+                build_call_record(
+                    None,
+                    model=self._model,
+                    provider="google",
+                    latency_seconds=time.perf_counter() - started,
+                    error="provider_unavailable",
+                ),
+            )
             raise InternalError("AI provider unavailable") from exc
 
         try:
             content = response.choices[0].message.content
             if not content:
                 raise ValueError("empty content")
-            return json.loads(content)
+            data = json.loads(content)
         except (AttributeError, IndexError, KeyError, TypeError, ValueError) as exc:
+            _emit(
+                on_call,
+                build_call_record(
+                    response,
+                    model=self._model,
+                    provider="google",
+                    latency_seconds=time.perf_counter() - started,
+                    error="invalid_response",
+                ),
+            )
             raise InternalError("Unexpected AI provider response") from exc
+
+        _emit(
+            on_call,
+            build_call_record(
+                response,
+                model=self._model,
+                provider="google",
+                latency_seconds=time.perf_counter() - started,
+            ),
+        )
+        return data

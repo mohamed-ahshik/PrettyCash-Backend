@@ -84,6 +84,87 @@ def test_analyze_includes_category_prompt_and_schema():
     assert "categoryConfidence" in schema["required"]
 
 
+def test_analyze_emits_call_record_on_success():
+    response = SimpleNamespace(
+        choices=[
+            SimpleNamespace(
+                message=SimpleNamespace(
+                    content=json.dumps({"merchant": "X", "amount": 1.0})
+                )
+            )
+        ],
+        usage=SimpleNamespace(
+            prompt_tokens=100, completion_tokens=20, total_tokens=120
+        ),
+        _hidden_params={"response_cost": 0.002},
+    )
+    records = []
+    client = GeminiClient(
+        "key", "gemini-3.1-flash-lite", completion_fn=FakeCompletion(response=response)
+    )
+
+    client.analyze("aGVsbG8=", "image/jpeg", on_call=records.append)
+
+    assert len(records) == 1
+    assert records[0].provider == "google"
+    assert records[0].model == "gemini/gemini-3.1-flash-lite"
+    assert records[0].input_tokens == 100
+    assert records[0].output_tokens == 20
+    assert records[0].cost_usd == 0.002
+    assert records[0].is_error is False
+
+
+def test_analyze_emits_error_record_on_provider_error():
+    records = []
+    client = GeminiClient(
+        "key",
+        "gemini-3.1-flash-lite",
+        completion_fn=FakeCompletion(error=RuntimeError("provider down")),
+    )
+
+    with pytest.raises(InternalError):
+        client.analyze("aGVsbG8=", "image/jpeg", on_call=records.append)
+
+    assert len(records) == 1
+    assert records[0].is_error is True
+    assert records[0].error == "provider_unavailable"
+    assert records[0].cost_usd is None
+
+
+def test_analyze_emits_error_record_on_invalid_response():
+    records = []
+    client = GeminiClient(
+        "key",
+        "gemini-3.1-flash-lite",
+        completion_fn=FakeCompletion(content="not-json"),
+    )
+
+    with pytest.raises(InternalError):
+        client.analyze("aGVsbG8=", "image/jpeg", on_call=records.append)
+
+    assert len(records) == 1
+    assert records[0].is_error is True
+    assert records[0].error == "invalid_response"
+
+
+def test_analyze_ignores_analytics_callback_failure():
+    client = GeminiClient(
+        "key",
+        "gemini-3.1-flash-lite",
+        completion_fn=FakeCompletion(
+            content=json.dumps({"merchant": "X", "amount": 1.0})
+        ),
+    )
+
+    result = client.analyze(
+        "aGVsbG8=",
+        "image/jpeg",
+        on_call=lambda record: (_ for _ in ()).throw(RuntimeError("analytics down")),
+    )
+
+    assert result["merchant"] == "X"
+
+
 def test_analyze_does_not_double_prefix_model():
     fake = FakeCompletion(content=json.dumps({"merchant": "X", "amount": 1.0}))
     client = GeminiClient("key", "gemini/gemini-3.1-flash-lite", completion_fn=fake)

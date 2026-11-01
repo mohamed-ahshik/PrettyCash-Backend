@@ -16,6 +16,10 @@ class Settings(BaseSettings):
     receipt_classifier_threshold: float = Field(default=0.3, ge=0.0, le=1.0)
     receipt_category_confidence_threshold: float = Field(default=0.7, ge=0.0, le=1.0)
     openrouter_timeout_seconds: float = Field(default=5.0, gt=0.0)
+    posthog_enabled: bool = False
+    posthog_project_api_key: str = ""
+    posthog_host: str = "https://us.i.posthog.com"
+    environment: str = "development"
     rate_limit_per_minute: int = 30
     max_image_bytes: int = 10 * 1024 * 1024
     max_image_dimension: int = 1600

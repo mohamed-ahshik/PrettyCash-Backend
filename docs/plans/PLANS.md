@@ -18,8 +18,8 @@ same `01-`, `02-`, `03-` order as specs. Execute plans in the order listed in [[
 ## Sections
 
 - `01-api/` — [[API-PLANS]] — receipt-analysis API implementation.
-- `02-ai-providers/` — [[AI-PROVIDERS-PLANS]] — classifier, LiteLLM, and auto-categorization
-  implementations.
+- `02-ai-providers/` — [[AI-PROVIDERS-PLANS]] — classifier, LiteLLM, auto-categorization, and
+  PostHog LLM observability implementations.
 - `03-queues-and-workers/` — [[QUEUES-AND-WORKERS-PLANS]] — Redis queue and classifier-worker
   implementation.
 

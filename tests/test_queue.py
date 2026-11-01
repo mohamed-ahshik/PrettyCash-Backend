@@ -23,6 +23,7 @@ def test_redis_queue_roundtrip():
         mime_type="image/jpeg",
         auto_categorize=True,
         categories=[{"id": "cat-1", "name": "Food", "description": "Groceries"}],
+        user_id="user-1",
     )
     q.enqueue(job)
     assert q.size() == 1
@@ -32,6 +33,7 @@ def test_redis_queue_roundtrip():
     assert dequeued.image_base64 == "aGk="
     assert dequeued.auto_categorize is True
     assert dequeued.categories == [{"id": "cat-1", "name": "Food", "description": "Groceries"}]
+    assert dequeued.user_id == "user-1"
     assert q.size() == 0
 
 

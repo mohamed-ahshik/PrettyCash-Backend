@@ -36,6 +36,10 @@ LiteLLM provider abstraction.
   Gemini extraction contract. Implemented; its Gemini client section is superseded by the LiteLLM
   design.
 
+- [[2026-10-31-posthog-llm-observability-design|LLM Observability with PostHog]] — implemented;
+  captures real Gemini/Jev token usage, cost, latency, and receipt-job attribution in PostHog.
+  Job-only attribution until JWT auth lands; disabled by default.
+
 ## Plans
 
 - [[2026-10-22-litellm-migration|LiteLLM migration implementation]] — implemented; migrates Gemini
@@ -45,6 +49,8 @@ LiteLLM provider abstraction.
 - [[2026-09-13-prettycash-backend-receipt-analysis|Receipt Analysis implementation]] — implemented.
 - [[2026-10-24-auto-categorization|Auto-categorization implementation]] — implemented; backend
   verified live and frontend integrated.
+- [[2026-10-31-posthog-llm-observability|PostHog LLM observability implementation]] — implemented;
+  job-only attribution, disabled by default.
 
 ## Related sections
 

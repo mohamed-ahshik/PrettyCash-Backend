@@ -51,6 +51,13 @@ uv run ruff check .
 
 See `docs/specs/SPECS.md` for the full contract.
 
+## LLM Observability
+
+Set `POSTHOG_ENABLED=true`, `POSTHOG_PROJECT_API_KEY`, `POSTHOG_HOST`, and `ENVIRONMENT` to emit
+one PostHog `$ai_generation` event per Gemini/Jev call with provider/model, tokens, cost, latency,
+and success/error. Receipt images, prompts, extracted values, and keys are never sent. Until JWT
+auth lands, events use the receipt job ID as `distinct_id` and `attribution=job_only`.
+
 ## Docker Compose
 
 ```bash

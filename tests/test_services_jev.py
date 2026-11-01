@@ -48,6 +48,77 @@ def test_classify_calls_litellm_and_parses_score():
     assert question["criteria"]["false"]
 
 
+def test_classify_emits_call_record_on_success():
+    def fake(**kwargs):
+        return SimpleNamespace(
+            answers={"is_receipt": SimpleNamespace(noul=0.9)},
+            model="typesafe/jev-1.14-20261014",
+            usage=SimpleNamespace(input_tokens=50, output_tokens=5),
+            _hidden_params={"response_cost": 0.0002},
+        )
+
+    records = []
+    client = JevClient("key", "typesafe/jev-1.14", systemone_fn=fake)
+
+    client.classify("aGVsbG8=", on_call=records.append)
+
+    assert len(records) == 1
+    assert records[0].provider == "openrouter"
+    assert records[0].model == "openrouter/typesafe/jev-1.14"
+    assert records[0].input_tokens == 50
+    assert records[0].output_tokens == 5
+    assert records[0].total_tokens == 55
+    assert records[0].cost_usd == 0.0002
+    assert records[0].is_error is False
+
+
+def test_classify_emits_error_record_on_provider_error():
+    records = []
+    client = JevClient(
+        "key",
+        "typesafe/jev-1.14",
+        systemone_fn=FakeSystemone(error=RuntimeError("provider down")),
+    )
+
+    with pytest.raises(ClassifierUnavailable):
+        client.classify("aGVsbG8=", on_call=records.append)
+
+    assert len(records) == 1
+    assert records[0].is_error is True
+    assert records[0].error == "provider_unavailable"
+
+
+def test_classify_emits_error_record_on_malformed_response():
+    def fake(**kwargs):
+        return SimpleNamespace(answers={}, model="typesafe/jev-1.14")
+
+    records = []
+    client = JevClient("key", "typesafe/jev-1.14", systemone_fn=fake)
+
+    with pytest.raises(ClassifierUnavailable):
+        client.classify("aGVsbG8=", on_call=records.append)
+
+    assert len(records) == 1
+    assert records[0].is_error is True
+    assert records[0].error == "invalid_response"
+
+
+def test_classify_emits_error_record_on_invalid_score():
+    records = []
+    client = JevClient(
+        "key",
+        "typesafe/jev-1.14",
+        systemone_fn=FakeSystemone(noul=1.5),
+    )
+
+    with pytest.raises(ClassifierUnavailable):
+        client.classify("aGVsbG8=", on_call=records.append)
+
+    assert len(records) == 1
+    assert records[0].is_error is True
+    assert records[0].error == "invalid_score"
+
+
 def test_classify_does_not_double_prefix_model():
     fake = FakeSystemone(noul=0.5)
     client = JevClient("key", "openrouter/typesafe/jev-1.14", systemone_fn=fake)

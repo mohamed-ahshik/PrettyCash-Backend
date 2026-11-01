@@ -210,6 +210,8 @@ A task is not complete until all applicable boxes are checked:
   `receipt:classify` and `receipt:queue`; `rejected` status.
 - Receipt auto-categorization is implemented (backend verified live; frontend integrated). Fallback
   models are deferred.
+- PostHog LLM observability is implemented; disabled by default and job-only attribution until JWT
+  auth lands.
 - Read first: `docs/prettycash-backend-architecture/ARCHITECTURE.md`.
 - Specs: `docs/specs/<NN-section>/` (MOC: [[SPECS]]).
 - Plans: `docs/plans/<NN-section>/` (MOC: [[PLANS]]).
