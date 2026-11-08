@@ -1,0 +1,29 @@
+name: Deploy PrettyCash Backend to Raspberry Pi
+
+on:
+  push:
+    branches: [ main ]  # Triggers deployment automatically whenever you push to main
+
+jobs:
+  deploy:
+    runs-on: self-hosted  # Directs the job to your Raspberry Pi runner
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Deploy and Restart Services
+        run: |
+          echo "Starting deployment on Raspberry Pi..."
+          
+          # Navigate to your backend directory on the Pi
+          cd ~/PrettyCash-Backend || exit 1
+          
+          # Pull latest changes from main branch
+          git pull origin main
+          
+          # Rebuild and restart Docker containers in detached mode
+          docker compose down
+          docker compose up --build -d
+          
+          echo "Deployment successful!"
