@@ -61,8 +61,8 @@ auth lands, events use the receipt job ID as `distinct_id` and `attribution=job_
 ## Docker Compose
 
 ```bash
-docker compose -f docker/compose.yaml build
-docker compose -f docker/compose.yaml up
+docker compose build
+docker compose up
 ```
 
 Runs `api`, `classifier`, `worker`, and `redis` (persisted via the `redis-data` volume with AOF).
