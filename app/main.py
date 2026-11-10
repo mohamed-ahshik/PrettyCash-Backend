@@ -12,6 +12,7 @@ from app.core.config import Settings, get_settings
 from app.core.errors import AppError, ErrorCode, InternalError
 from app.core.logging import configure_logging
 from app.queue.redis import CLASSIFY_QUEUE, RedisQueue
+from app.services.quota import QuotaService
 from app.services.ratelimit import RedisRateLimiter
 from app.store.base import JobStore
 from app.store.supabase import SupabaseJobStore
@@ -28,9 +29,8 @@ def create_app(
     configure_logging(settings.log_level)
 
     redis_client = redis_client or Redis.from_url(settings.redis_url, decode_responses=True)
-    job_store = job_store or SupabaseJobStore(
-        create_client(settings.supabase_url, settings.supabase_service_role_key)
-    )
+    supabase_client = create_client(settings.supabase_url, settings.supabase_service_role_key)
+    job_store = job_store or SupabaseJobStore(supabase_client)
 
     app = FastAPI(title="PrettyCash Backend", version="0.1.0")
 
@@ -46,6 +46,8 @@ def create_app(
     app.state.queue = RedisQueue(redis_client, CLASSIFY_QUEUE)
     app.state.rate_limiter = RedisRateLimiter(redis_client, settings.rate_limit_per_minute)
     app.state.job_store = job_store
+    app.state.supabase = supabase_client
+    app.state.quota = QuotaService(supabase_client, settings)
 
     app.include_router(api_router)
 

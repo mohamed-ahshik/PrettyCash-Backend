@@ -6,10 +6,27 @@ import fakeredis
 import httpx
 from PIL import Image
 
+from types import SimpleNamespace
+
+from app.api.deps import require_scan_access, require_user
 from app.core.config import Settings
 from app.main import create_app
+from app.services.quota import Entitlement
 
-AUTH = {"Authorization": "Bearer test-vision-key"}
+AUTH = {"X-API-Key": "test-vision-key", "Authorization": "Bearer test-user"}
+
+
+def _allow_scan(app):
+    app.dependency_overrides[require_user] = lambda: SimpleNamespace(id="test-user")
+    app.dependency_overrides[require_scan_access] = lambda: Entitlement(
+        is_pro=False,
+        in_trial=True,
+        trial_days_left=6,
+        daily_scans_used=1,
+        daily_limit=3,
+        can_scan=True,
+        block_reason=None,
+    )
 
 
 def _png_base64() -> str:
@@ -126,6 +143,7 @@ async def test_analyze_receipt_rate_limited(job_store):
         job_store=job_store,
         redis_client=fakeredis.FakeRedis(decode_responses=True),
     )
+    _allow_scan(app)
     transport = httpx.ASGITransport(app=app)
     async with httpx.AsyncClient(transport=transport, base_url="http://test") as c:
         first = await c.post("/api/v1/analyze-receipt", json=_payload(), headers=AUTH)
@@ -149,6 +167,7 @@ async def test_get_job_not_rate_limited(job_store):
         job_store=job_store,
         redis_client=fakeredis.FakeRedis(decode_responses=True),
     )
+    _allow_scan(app)
     transport = httpx.ASGITransport(app=app)
     async with httpx.AsyncClient(transport=transport, base_url="http://test") as c:
         post = await c.post("/api/v1/analyze-receipt", json=_payload(), headers=AUTH)
@@ -172,6 +191,7 @@ async def test_analyze_receipt_enqueues_to_classify_queue(job_store):
         job_store=job_store,
         redis_client=redis_client,
     )
+    _allow_scan(app)
     transport = httpx.ASGITransport(app=app)
     async with httpx.AsyncClient(transport=transport, base_url="http://test") as c:
         response = await c.post("/api/v1/analyze-receipt", json=_payload(), headers=AUTH)
@@ -194,6 +214,7 @@ async def test_analyze_receipt_enqueues_category_fields(job_store):
         job_store=job_store,
         redis_client=redis_client,
     )
+    _allow_scan(app)
     transport = httpx.ASGITransport(app=app)
     categories = [
         {"id": "cat-food", "name": "Food", "description": "Groceries & dining"},
@@ -225,6 +246,7 @@ async def test_analyze_receipt_is_idempotent_with_key(job_store):
         job_store=job_store,
         redis_client=redis_client,
     )
+    _allow_scan(app)
     headers = {**AUTH, "Idempotency-Key": "request-1"}
     transport = httpx.ASGITransport(app=app)
     async with httpx.AsyncClient(transport=transport, base_url="http://test") as c:

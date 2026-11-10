@@ -1,9 +1,13 @@
+from types import SimpleNamespace
+
 import fakeredis
 import httpx
 import pytest
 
 from app.core.config import Settings
+from app.api.deps import require_scan_access, require_user
 from app.main import create_app
+from app.services.quota import Entitlement
 from app.store.base import CreatedJob
 
 
@@ -13,7 +17,7 @@ class FakeJobStore:
         self.request_ids = {}
         self.counter = 0
 
-    def create(self, request_id: str | None = None) -> CreatedJob:
+    def create(self, request_id: str | None = None, user_id: str | None = None) -> CreatedJob:
         if request_id and request_id in self.request_ids:
             return CreatedJob(self.request_ids[request_id], False)
         self.counter += 1
@@ -43,7 +47,7 @@ class FakeJobStore:
             {"status": "rejected", "error_code": code, "error_message": message}
         )
 
-    def get(self, job_id: str) -> dict | None:
+    def get(self, job_id: str, user_id: str | None = None) -> dict | None:
         return self.rows.get(job_id)
 
 
@@ -69,5 +73,15 @@ def job_store() -> FakeJobStore:
 def client(settings, job_store):
     redis_client = fakeredis.FakeRedis(decode_responses=True)
     app = create_app(settings, job_store=job_store, redis_client=redis_client)
+    app.dependency_overrides[require_user] = lambda: SimpleNamespace(id="test-user")
+    app.dependency_overrides[require_scan_access] = lambda: Entitlement(
+        is_pro=False,
+        in_trial=True,
+        trial_days_left=6,
+        daily_scans_used=1,
+        daily_limit=3,
+        can_scan=True,
+        block_reason=None,
+    )
     transport = httpx.ASGITransport(app=app)
     return httpx.AsyncClient(transport=transport, base_url="http://test")

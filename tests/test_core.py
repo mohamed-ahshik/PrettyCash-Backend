@@ -15,12 +15,14 @@ def test_settings_defaults():
     s = Settings(
         _env_file=None,
         gemini_api_key="g",
+        gemini_model="gemini-3.1-flash-lite",
         vision_api_key="v",
         redis_url="redis://localhost:6379/0",
         supabase_url="https://example.supabase.co",
         supabase_service_role_key="key",
         openrouter_jev_api_key="",
         posthog_project_api_key="",
+        posthog_enabled=False,
     )
     assert s.gemini_model == "gemini-3.1-flash-lite"
     assert s.rate_limit_per_minute == 30
@@ -59,6 +61,8 @@ def test_all_error_codes_exist():
         "INTERNAL",
         "NOT_FOUND",
         "NOT_A_RECEIPT",
+        "SUBSCRIPTION_REQUIRED",
+        "DAILY_TRIAL_LIMIT_REACHED",
     }
     assert InternalError().status_code == 500
     assert RateLimitedError().status_code == 429
