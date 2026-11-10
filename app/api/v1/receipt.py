@@ -3,7 +3,7 @@ import base64
 from fastapi import APIRouter, Depends, Header, Request
 from starlette.concurrency import run_in_threadpool
 
-from app.api.deps import require_api_key, require_rate_limit
+from app.api.deps import require_api_key, require_rate_limit, require_scan_access, require_user
 from app.api.v1.schemas import AnalyzeReceiptAccepted, AnalyzeReceiptRequest, JobStatusResponse
 from app.core.errors import NotFoundError
 from app.queue.base import Job
@@ -25,6 +25,8 @@ async def analyze_receipt(
         default=None, alias="Idempotency-Key", min_length=1, max_length=128
     ),
     _token: str = Depends(require_rate_limit),
+    _quota=Depends(require_scan_access),
+    user=Depends(require_user),
 ):
     settings = request.app.state.settings
     queue = request.app.state.queue
@@ -33,7 +35,7 @@ async def analyze_receipt(
     image_bytes, mime_type = await run_in_threadpool(
         decode_and_process, payload.image.base64, settings
     )
-    created = job_store.create(idempotency_key)
+    created = job_store.create(idempotency_key, str(user.id))
     if created.created:
         queue.enqueue(
             Job(
@@ -45,7 +47,7 @@ async def analyze_receipt(
             )
         )
 
-    row = job_store.get(created.job_id)
+    row = job_store.get(created.job_id, str(user.id))
     status = row["status"] if row else "pending"
     return {"jobId": created.job_id, "status": status}
 
@@ -55,8 +57,13 @@ async def analyze_receipt(
     response_model=JobStatusResponse,
     response_model_exclude_none=True,
 )
-async def get_job(job_id: str, request: Request, _token: str = Depends(require_api_key)):
-    row = request.app.state.job_store.get(job_id)
+async def get_job(
+    job_id: str,
+    request: Request,
+    _token: str = Depends(require_api_key),
+    user=Depends(require_user),
+):
+    row = request.app.state.job_store.get(job_id, str(user.id))
     if row is None:
         raise NotFoundError("Job not found")
     return _to_status_response(row)

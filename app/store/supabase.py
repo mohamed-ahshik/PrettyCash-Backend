@@ -12,7 +12,7 @@ class SupabaseJobStore:
     def __init__(self, client: Client) -> None:
         self._client = client
 
-    def create(self, request_id: str | None = None) -> CreatedJob:
+    def create(self, request_id: str | None = None, user_id: str | None = None) -> CreatedJob:
         if request_id:
             existing = self._find_by_request_id(request_id)
             if existing:
@@ -21,6 +21,8 @@ class SupabaseJobStore:
         payload: dict[str, Any] = {"status": JobStatus.PENDING.value}
         if request_id:
             payload["request_id"] = request_id
+        if user_id:
+            payload["user_id"] = user_id
         try:
             res = self._client.table(self.TABLE).insert(payload).execute()
         except APIError as exc:
@@ -70,6 +72,9 @@ class SupabaseJobStore:
             {"status": JobStatus.FAILED.value, "error_code": code, "error_message": message}
         ).eq("id", job_id).execute()
 
-    def get(self, job_id: str) -> dict[str, Any] | None:
-        res = self._client.table(self.TABLE).select("*").eq("id", job_id).execute()
+    def get(self, job_id: str, user_id: str | None = None) -> dict[str, Any] | None:
+        query = self._client.table(self.TABLE).select("*").eq("id", job_id)
+        if user_id:
+            query = query.eq("user_id", user_id)
+        res = query.execute()
         return res.data[0] if res.data else None

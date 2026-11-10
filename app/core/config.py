@@ -15,6 +15,9 @@ class Settings(BaseSettings):
     openrouter_jev_model: str = "typesafe/jev-1.14"
     receipt_classifier_threshold: float = Field(default=0.3, ge=0.0, le=1.0)
     receipt_category_confidence_threshold: float = Field(default=0.7, ge=0.0, le=1.0)
+    trial_days: int = Field(default=7, ge=1)
+    trial_daily_scan_limit: int = Field(default=3, ge=1)
+    revenuecat_webhook_auth_token: str = ""
     openrouter_timeout_seconds: float = Field(default=5.0, gt=0.0)
     posthog_enabled: bool = False
     posthog_project_api_key: str = ""
