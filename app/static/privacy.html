@@ -1,0 +1,319 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="index, follow">
+  <title>Privacy Policy — PrettyCash</title>
+  <style>
+    :root {
+      color-scheme: light dark;
+      --bg: #ffffff;
+      --fg: #1a1d21;
+      --muted: #5b6470;
+      --rule: #e3e6ea;
+      --accent: #0b6b53;
+      --draft-bg: #fff3cd;
+      --draft-border: #e0c36a;
+      --draft-fg: #5c4700;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #101418;
+        --fg: #e8eaed;
+        --muted: #a0a8b3;
+        --rule: #2a3138;
+        --accent: #5fd3b2;
+        --draft-bg: #3a2f0b;
+        --draft-border: #8a6d1f;
+        --draft-fg: #ffe9a8;
+      }
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html {
+      -webkit-text-size-adjust: 100%;
+    }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--fg);
+      font: 16px/1.7 system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    }
+
+    main {
+      max-width: 46rem;
+      margin: 0 auto;
+      padding: 2.5rem 1.25rem 4rem;
+    }
+
+    h1 {
+      margin: 0.4rem 0 0.75rem;
+      font-size: clamp(2rem, 5vw, 2.6rem);
+      line-height: 1.15;
+      letter-spacing: -0.02em;
+    }
+
+    h2 {
+      margin: 2.2rem 0 0.6rem;
+      font-size: 1.25rem;
+      line-height: 1.3;
+    }
+
+    p,
+    li {
+      color: var(--fg);
+    }
+
+    ul {
+      padding-left: 1.25rem;
+    }
+
+    li + li {
+      margin-top: 0.4rem;
+    }
+
+    a {
+      color: var(--accent);
+      text-underline-offset: 0.15em;
+    }
+
+    .eyebrow {
+      margin: 0;
+      color: var(--muted);
+      font-size: 0.75rem;
+      font-weight: 600;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+    }
+
+    .meta {
+      margin: 0.25rem 0 0;
+      color: var(--muted);
+      font-size: 0.9rem;
+    }
+
+    .lede {
+      color: var(--muted);
+      font-size: 1.05rem;
+    }
+
+    section {
+      margin-top: 2rem;
+      padding-top: 1.4rem;
+      border-top: 1px solid var(--rule);
+    }
+
+    .draft {
+      margin-bottom: 1.5rem;
+      padding: 0.75rem 1rem;
+      border: 1px solid var(--draft-border);
+      border-radius: 0.5rem;
+      background: var(--draft-bg);
+      color: var(--draft-fg);
+      font-size: 0.9rem;
+    }
+
+    footer {
+      max-width: 46rem;
+      margin: 0 auto;
+      padding: 0 1.25rem 3rem;
+      color: var(--muted);
+      font-size: 0.85rem;
+    }
+
+    @media print {
+      .draft {
+        display: none;
+      }
+
+      body {
+        background: #ffffff;
+        color: #000000;
+      }
+
+      a {
+        color: #000000;
+      }
+
+      section {
+        break-inside: avoid;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <!-- DRAFT: remove this banner and every [PLACEHOLDER] before publishing. -->
+    <div class="draft" role="note">
+      <strong>DRAFT.</strong> Replace every [PLACEHOLDER] with final copy and remove this banner
+      before publishing.
+    </div>
+
+    <header>
+      <p class="eyebrow">PrettyCash</p>
+      <h1>Privacy Policy</h1>
+      <p class="meta">
+        Effective date: [EFFECTIVE DATE] · Last updated: [LAST UPDATED DATE]
+      </p>
+    </header>
+
+    <p class="lede">
+      [One or two sentences explaining what PrettyCash does and what this policy covers.]
+    </p>
+
+    <section id="who-we-are">
+      <h2>1. Who we are</h2>
+      <p>
+        PrettyCash is operated by [LEGAL ENTITY NAME], [ADDRESS], [COUNTRY]. For privacy questions,
+        contact <a href="mailto:[PRIVACY EMAIL]">[PRIVACY EMAIL]</a>.
+      </p>
+      <p>
+        [If you have a Data Protection Officer or a regional representative, name them here.]
+      </p>
+    </section>
+
+    <section id="information-we-collect">
+      <h2>2. Information we collect</h2>
+      <ul>
+        <li>
+          <strong>Account information.</strong> [What you collect when someone creates an account:
+          name, email address, user identifier, profile settings.]
+        </li>
+        <li>
+          <strong>Receipt images.</strong> Photos you choose to scan. Images are sent to our AI
+          providers to classify the image and extract receipt data.
+        </li>
+        <li>
+          <strong>Extracted receipt data.</strong> Merchant, date, total, line items, and the
+          category selected for a receipt.
+        </li>
+        <li>
+          <strong>Subscription information.</strong> [Purchase status and entitlement information
+          received from RevenueCat and Google Play. State whether you receive payment details.]
+        </li>
+        <li>
+          <strong>Technical and usage data.</strong> [Log data, app version, device type, job
+          identifiers, and error information.]
+        </li>
+      </ul>
+    </section>
+
+    <section id="how-we-use">
+      <h2>3. How we use information</h2>
+      <ul>
+        <li>To scan receipts, extract their contents, and show the results in the app.</li>
+        <li>To classify whether an uploaded image is a receipt before extraction.</li>
+        <li>To provide, maintain, and troubleshoot the service.</li>
+        <li>To manage subscriptions and entitlements.</li>
+        <li>To detect abuse, enforce rate limits, and keep the service secure.</li>
+        <li>[Add any other purpose you actually rely on, such as analytics or support.]</li>
+      </ul>
+      <p>
+        [State your legal bases if you serve users in the EEA or UK, for example contract
+        performance, legitimate interests, and consent.]
+      </p>
+    </section>
+
+    <section id="service-providers">
+      <h2>4. Service providers</h2>
+      <p>
+        We share limited information with providers that process it on our behalf:
+      </p>
+      <ul>
+        <li>
+          <strong>Supabase</strong> — database hosting for job status and extracted receipt data.
+        </li>
+        <li>
+          <strong>Redis</strong> — a transient queue for scan jobs. Receipt images are not stored
+          there long-term.
+        </li>
+        <li>
+          <strong>Google Gemini</strong> — extracts receipt data from the images you submit.
+        </li>
+        <li>
+          <strong>OpenRouter / Jev</strong> — classifies whether an submitted image is a receipt.
+        </li>
+        <li>
+          <strong>PostHog</strong> — receives model usage metadata such as provider, model, token
+          counts, cost, and latency. [Confirm this is enabled in production; remove it otherwise.]
+        </li>
+        <li>
+          <strong>RevenueCat and Google Play</strong> — manage subscription purchases and
+          entitlements.
+        </li>
+      </ul>
+      <p>
+        [Add or remove providers so this list matches production exactly. If you use mobile
+        analytics, crash reporting, or advertising SDKs, list them here.]
+      </p>
+    </section>
+
+    <section id="retention">
+      <h2>5. How long we keep information</h2>
+      <p>
+        [State the actual retention periods. For example: receipt images are processed transiently
+        and are not stored after a job completes; extracted receipt data and job records are kept
+        for as long as the account is active or until a deletion request is honored; logs are kept
+        for a stated period.]
+      </p>
+    </section>
+
+    <section id="security">
+      <h2>6. Security</h2>
+      <p>
+        [Describe the measures you actually use: encryption in transit, access controls, key
+        management, and monitoring. State that no method of transmission or storage is completely
+        secure.]
+      </p>
+    </section>
+
+    <section id="your-rights">
+      <h2>7. Your choices and rights</h2>
+      <p>
+        [Describe the rights available in the regions you serve, such as access, correction,
+        deletion, portability, objection, and withdrawal of consent. Explain how to exercise them
+        and how long you take to respond.]
+      </p>
+      <p>
+        [If the app will offer in-app account deletion, describe it here once that endpoint ships.
+        Until then, do not promise a feature that does not exist.]
+      </p>
+    </section>
+
+    <section id="children">
+      <h2>8. Children</h2>
+      <p>
+        [State that the service is not directed to children under the age required in your
+        jurisdiction, and explain how to contact you if a child has provided information.]
+      </p>
+    </section>
+
+    <section id="changes">
+      <h2>9. Changes to this policy</h2>
+      <p>
+        [Explain how you announce changes, where the updated policy appears, and when a change takes
+        effect.]
+      </p>
+    </section>
+
+    <section id="contact">
+      <h2>10. Contact</h2>
+      <p>
+        [LEGAL ENTITY NAME]<br>
+        [ADDRESS]<br>
+        <a href="mailto:[PRIVACY EMAIL]">[PRIVACY EMAIL]</a>
+      </p>
+    </section>
+  </main>
+
+  <footer>
+    <p>© [YEAR] [LEGAL ENTITY NAME]. All rights reserved.</p>
+  </footer>
+</body>
+</html>

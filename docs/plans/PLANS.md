@@ -22,6 +22,7 @@ same `01-`, `02-`, `03-` order as specs. Execute plans in the order listed in [[
   PostHog LLM observability implementations.
 - `03-queues-and-workers/` — [[QUEUES-AND-WORKERS-PLANS]] — Redis queue and classifier-worker
   implementation.
+- `04-web-content/` — [[WEB-CONTENT-PLANS]] — privacy policy page and public web content.
 
 ## Related
 

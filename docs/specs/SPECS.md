@@ -23,6 +23,7 @@ note and from the section MOC below.
   auto-categorization, and PostHog LLM observability.
 - `03-queues-and-workers/` — [[QUEUES-AND-WORKERS]] — Redis queues, worker topology, job lifecycle,
   and storage changes.
+- `04-web-content/` — [[WEB-CONTENT]] — public, non-API pages served by the backend.
 
 ## Related
 
