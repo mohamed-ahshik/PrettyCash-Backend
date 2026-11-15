@@ -18,7 +18,7 @@ This section owns implementation plans for public, non-API pages served by the b
 
 ## Plans
 
-- [[2026-11-16-privacy-policy-page|Privacy Policy Page implementation]] — approved.
+- [[2026-11-16-privacy-policy-page|Privacy Policy Page implementation]] — implemented.
 
 ## Related sections
 

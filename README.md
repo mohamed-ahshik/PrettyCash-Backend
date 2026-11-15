@@ -51,6 +51,11 @@ uv run ruff check .
 
 See `docs/specs/SPECS.md` for the full contract.
 
+## Privacy policy
+
+Served by the API at `GET /privacy`, without authentication:
+`https://prettycash.app/privacy` (or `http://localhost:8000/privacy` locally).
+
 ## LLM Observability
 
 Set `POSTHOG_ENABLED=true`, `POSTHOG_PROJECT_API_KEY`, `POSTHOG_HOST`, and `ENVIRONMENT` to emit
