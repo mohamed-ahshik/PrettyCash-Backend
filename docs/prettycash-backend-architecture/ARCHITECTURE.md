@@ -325,6 +325,7 @@ Returns the current Supabase row mapped to:
 | `GET /api/v1/health` | No | `{"status":"ok"}` |
 | `POST /api/v1/analyze-receipt` | Bearer `VISION_API_KEY` | Validate image, create or reuse job, enqueue new jobs, `202` |
 | `GET /api/v1/jobs/{job_id}` | Bearer `VISION_API_KEY` | Return job status/result/error; `404` if unknown |
+| `GET /` | No | Plain-text `PrettyCash` placeholder (not in OpenAPI) |
 | `GET /privacy` | No | Static HTML privacy policy (outside `/api/v1`; not in OpenAPI) |
 
 `POST /api/v1/analyze-receipt` also accepts optional `autoCategorize` and `categories`:
@@ -518,9 +519,9 @@ Rules:
 - The `classifier` service uses the same image and consumes `receipt:classify`.
 - Supabase is external.
 - The API health endpoint is `GET /api/v1/health`.
-- The API image also serves `GET /privacy` from `app/static/privacy.html`. Cloudflare routes
-  `prettycash.app` to port 8000; `api.prettycash.app` stays routed to the same service until the
-  mobile app ships the new base URL.
+- The API image also serves `GET /privacy` from `app/static/privacy.html`; `GET /` returns the
+  plain-text placeholder `PrettyCash`. Cloudflare routes `prettycash.app` to port 8000;
+  `api.prettycash.app` stays routed to the same service until the mobile app ships the new base URL.
 - The Docker image installs runtime dependencies with `uv sync --frozen --no-dev`.
 - Adding a runtime dependency requires rebuilding the image and refreshing `uv.lock`.
 - No secrets are baked into the image.
@@ -644,7 +645,7 @@ they do not have separate spec folders yet.
 | `docs/specs/02-ai-providers/2026-10-22-litellm-migration-design.md` | Spec | Implemented and verified | Provider calls via LiteLLM |
 | `docs/specs/02-ai-providers/2026-10-24-auto-categorization-design.md` | Spec | Implemented | Gemini category selection, queue fields, confidence threshold |
 | `docs/specs/02-ai-providers/2026-10-31-posthog-llm-observability-design.md` | Spec | Implemented (job-only attribution) | `$ai_generation` events, usage/cost, latency, failure isolation |
-| `docs/specs/04-web-content/2026-11-15-privacy-policy-page-design.md` | Spec | In progress | Public `GET /privacy` HTML page served from the API image |
+| `docs/specs/04-web-content/2026-11-15-privacy-policy-page-design.md` | Spec | In progress | Public `GET /privacy` HTML page and plain-text `GET /` placeholder |
 | `docs/plans/01-api/2026-09-13-prettycash-backend-receipt-analysis.md` | Plan | Implemented | Initial API + Gemini extraction |
 | `docs/plans/01-api/2026-10-24-receipt-analysis-idempotency.md` | Plan | Implemented | `Idempotency-Key`, `request_id`, duplicate-job reuse |
 | `docs/plans/03-queues-and-workers/2026-09-13-prettycash-backend-redis-queue.md` | Plan | Implemented | Async queue + Supabase job store |
@@ -652,7 +653,7 @@ they do not have separate spec folders yet.
 | `docs/plans/02-ai-providers/2026-10-22-litellm-migration.md` | Plan | Implemented | Provider calls via LiteLLM |
 | `docs/plans/02-ai-providers/2026-10-24-auto-categorization.md` | Plan | Implemented | Gemini category selection, queue fields, confidence threshold |
 | `docs/plans/02-ai-providers/2026-10-31-posthog-llm-observability.md` | Plan | Implemented | `$ai_generation` events, usage/cost, latency, failure isolation |
-| `docs/plans/04-web-content/2026-11-16-privacy-policy-page.md` | Plan | In progress | Public `GET /privacy` HTML page served from the API image |
+| `docs/plans/04-web-content/2026-11-16-privacy-policy-page.md` | Plan | In progress | Public `GET /privacy` HTML page and plain-text `GET /` placeholder |
 
 The frontend synthetic `$ai_generation` event was removed as part of the PostHog observability
 implementation. The frontend auto-categorization spec in the sibling repo is implemented; on-device
@@ -679,5 +680,6 @@ manual checks are outstanding:
 | 2026-10-24 | Added `Idempotency-Key` support, `receipt_jobs.request_id` unique index, and duplicate-job reuse; migration applied | `2026-10-24-receipt-analysis-idempotency-design.md` |
 | 2026-10-31 | Implemented PostHog `$ai_generation` observability for Gemini/Jev with job-only attribution; removed frontend synthetic event | `2026-10-31-posthog-llm-observability-design.md` |
 | 2026-11-16 | Added public `GET /privacy` serving the static privacy policy from the API image | `2026-11-15-privacy-policy-page-design.md` |
+| 2026-11-16 | Added plain-text `GET /` placeholder so the bare domain no longer returns the JSON 404 envelope | `2026-11-15-privacy-policy-page-design.md` |
 
 Append a new row for every implemented architectural change. Do not rewrite history.
