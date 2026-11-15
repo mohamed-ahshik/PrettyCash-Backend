@@ -303,11 +303,13 @@ Run:
 docker compose build api
 docker compose up -d api
 curl -i http://localhost:8000/privacy
+curl -i http://localhost:8000/
 curl -s http://localhost:8000/api/v1/health
 ```
 
-Expected: `/privacy` returns `200` with `content-type: text/html; charset=utf-8`; health returns
-`{"status":"ok"}`. A `500` here means the HTML asset is missing from the image.
+Expected: `/privacy` returns `200` with `content-type: text/html; charset=utf-8`; `/` returns
+`200` with `text/plain; charset=utf-8` and `PrettyCash`; health returns `{"status":"ok"}`. A `500`
+here means the HTML asset is missing from the image.
 
 - [ ] **Step 4: Deploy and verify Cloudflare**
 
@@ -319,10 +321,12 @@ Run:
 
 ```bash
 curl -i https://prettycash.app/privacy
+curl -i https://prettycash.app/
 curl -s https://prettycash.app/api/v1/health
 ```
 
-Expected: `200 text/html` for the page and `{"status":"ok"}` for health.
+Expected: `200 text/html` for the page, `200 text/plain` with `PrettyCash` for the root, and
+`{"status":"ok"}` for health.
 
 - [ ] **Step 5: Submit the store URL**
 
@@ -333,3 +337,54 @@ returns `200`.
 
 After the deploy checks above pass, set the spec and plan frontmatter to `status: implemented` and
 update the status lines in `WEB-CONTENT.md` and `WEB-CONTENT-PLANS.md` to "implemented".
+
+---
+
+### Task 4: Root plain-text placeholder (post-review addition)
+
+**Files:**
+- Modify: `app/api/pages.py`
+- Modify: `tests/test_api_privacy.py`
+
+**Interfaces:**
+- Consumes: the existing `router` in `app/api/pages.py`.
+- Produces: `GET /` → `PlainTextResponse("PrettyCash")`, with `include_in_schema=False`.
+
+- [ ] **Step 1: Write the failing test**
+
+Add to `tests/test_api_privacy.py`:
+
+```python
+async def test_root_shows_prettycash_text(client):
+    response = await client.get("/")
+    assert response.status_code == 200
+    assert response.headers["content-type"] == "text/plain; charset=utf-8"
+    assert response.text == "PrettyCash"
+```
+
+- [ ] **Step 2: Run it to verify it fails**
+
+Run: `uv run pytest tests/test_api_privacy.py::test_root_shows_prettycash_text -v`
+Expected: FAIL — `404` from the global JSON error handler.
+
+- [ ] **Step 3: Implement the route**
+
+In `app/api/pages.py`, import `PlainTextResponse` and add:
+
+```python
+@router.get("/", include_in_schema=False)
+async def root() -> PlainTextResponse:
+    return PlainTextResponse("PrettyCash")
+```
+
+- [ ] **Step 4: Run the checks**
+
+Run: `uv run pytest tests/test_api_privacy.py -v && uv run pytest -q && uv run ruff check .`
+Expected: PASS.
+
+- [ ] **Step 5: Commit**
+
+```bash
+git add app/api/pages.py tests/test_api_privacy.py
+git commit -m "feat: show PrettyCash at root"
+```

@@ -32,12 +32,13 @@ tags:
   `app/static/`; API-layer tests.
 - **New dependencies or boundaries:** none. No container, published port, queue, table, provider,
   environment variable, or layer responsibility is added.
-- **API contract:** adds one public, unauthenticated `GET /privacy` that returns HTML. The
-  `/api/v1/*` receipt and billing contracts do not change.
+- **API contract:** adds two public, unauthenticated routes: `GET /privacy` returns HTML and
+  `GET /` returns plain text `PrettyCash`. The `/api/v1/*` receipt and billing contracts do not
+  change.
 - **Deployment:** unchanged. The page ships inside the existing API image; no Compose, Dockerfile,
   or CI change is required.
-- **Current vs target:** `GET /privacy` currently falls through to the JSON error handler (404);
-  the target serves the privacy policy page.
+- **Current vs target:** `GET /privacy` and `GET /` currently fall through to the JSON error
+  handler (404); the target serves the privacy policy page and a plain-text root placeholder.
 - **Data/config:** no schema, queue, or configuration changes.
 - **Docs:** this spec introduces section `04-web-content`; update `SPECS.md`, `ARCHITECTURE.md`
   (route table, index, change log), and `README.md` during implementation.
@@ -52,6 +53,8 @@ container or port. Cloudflare Tunnel supplies the hostname and HTTPS.
 ## Goals
 
 - Serve a self-contained HTML privacy policy at `GET /privacy`, without authentication.
+- Serve the plain text `PrettyCash` at `GET /` so the bare domain never shows the JSON error
+  envelope. It is a placeholder for a future landing page.
 - Keep the existing API reachable on the same origin at `https://prettycash.app/api/v1/*`; the
   `/api/v1` prefix and contract do not change.
 - Return `text/html; charset=utf-8` and a short cache lifetime so wording corrections propagate.
@@ -87,6 +90,8 @@ container or port. Cloudflare Tunnel supplies the hostname and HTTPS.
 - `GET /privacy` returns `FileResponse(app/static/privacy.html, media_type="text/html")` with
   `Cache-Control: public, max-age=300`, and `include_in_schema=False` because it is not an API
   endpoint.
+- `GET /` returns `PlainTextResponse("PrettyCash")` with `include_in_schema=False`. It is a
+  placeholder, not a landing page; a future design can replace it without touching `/privacy`.
 - No auth dependency and no rate limit. Auth is applied per route in this codebase, so a new route
   is public by default.
 - Resolve the file path from `Path(__file__)`, not the process working directory, so tests and
@@ -96,7 +101,7 @@ container or port. Cloudflare Tunnel supplies the hostname and HTTPS.
   viewport meta tag, visible "Last updated" date, and print styles. No external requests.
 - The Docker image already runs `COPY app ./app`, so the asset is included without a Dockerfile
   change.
-- Unknown paths and the existing JSON error envelope are unchanged.
+- Unknown paths other than `/` keep the existing JSON error envelope.
 
 ### Edge routing (Cloudflare Tunnel, operational)
 
@@ -140,7 +145,9 @@ privacy; changes to the policy; contact.
   - `GET /privacy` with no credentials returns `200`, `text/html; charset=utf-8`, and a body that
     contains the expected title and heading.
   - The response includes `Cache-Control: public, max-age=300`.
-  - `/privacy` is absent from `/openapi.json` paths.
+  - `/privacy` and `/` are absent from `/openapi.json` paths.
+  - `GET /` with no credentials returns `200`, `text/plain; charset=utf-8`, and exactly
+    `PrettyCash`.
 - `uv run pytest` and `uv run ruff check .` pass.
 - Manual verification: `curl -i localhost:8000/privacy`; browser check at phone width; after
   deployment, load `https://prettycash.app/privacy` and confirm

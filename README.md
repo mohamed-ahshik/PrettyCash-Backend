@@ -56,6 +56,8 @@ See `docs/specs/SPECS.md` for the full contract.
 Served by the API at `GET /privacy`, without authentication:
 `https://prettycash.app/privacy` (or `http://localhost:8000/privacy` locally).
 
+The bare domain `GET /` returns the plain text `PrettyCash` until a landing page replaces it.
+
 ## LLM Observability
 
 Set `POSTHOG_ENABLED=true`, `POSTHOG_PROJECT_API_KEY`, `POSTHOG_HOST`, and `ENVIRONMENT` to emit
