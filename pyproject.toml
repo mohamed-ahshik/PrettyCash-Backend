@@ -42,3 +42,5 @@ target-version = "py312"
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "UP", "B"]
+# FastAPI dependency injection uses Depends() in argument defaults.
+ignore = ["B008"]
