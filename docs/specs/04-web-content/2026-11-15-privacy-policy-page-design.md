@@ -1,7 +1,7 @@
 ---
 title: "Privacy Policy Page Served by the API"
 type: spec
-status: implemented
+status: in-progress
 date: 2026-11-15
 section: web-content
 tags:
@@ -15,7 +15,7 @@ tags:
 # PrettyCash Backend — Privacy Policy Page (Design)
 
 **Date:** 2026-11-15
-**Status:** Implemented 2026-11-16
+**Status:** In progress
 
 ---
 

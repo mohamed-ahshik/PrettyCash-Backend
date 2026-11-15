@@ -1,7 +1,7 @@
 ---
 title: "Privacy Policy Page Implementation Plan"
 type: plan
-status: implemented
+status: in-progress
 date: 2026-11-16
 section: web-content
 tags:
@@ -265,8 +265,9 @@ Served by the API at `GET /privacy`, without authentication:
 
 - [ ] **Step 5: Update document statuses**
 
-Set the spec and plan frontmatter to `status: implemented`, and update the status lines in
-`WEB-CONTENT.md` and `WEB-CONTENT-PLANS.md` from "proposed" to "implemented".
+Set the spec and plan frontmatter to `status: in-progress`, and update the status lines in
+`WEB-CONTENT.md` and `WEB-CONTENT-PLANS.md` from "proposed" to "in progress". Task 3 marks them
+implemented after the deploy checks pass.
 
 - [ ] **Step 6: Commit**
 
@@ -327,3 +328,8 @@ Expected: `200 text/html` for the page and `{"status":"ok"}` for health.
 
 Use `https://prettycash.app/privacy` in the App Store / Play Console listing after the endpoint
 returns `200`.
+
+- [ ] **Step 6: Mark the documents implemented**
+
+After the deploy checks above pass, set the spec and plan frontmatter to `status: implemented` and
+update the status lines in `WEB-CONTENT.md` and `WEB-CONTENT-PLANS.md` to "implemented".
