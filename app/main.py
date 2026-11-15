@@ -7,6 +7,7 @@ from fastapi.responses import JSONResponse
 from redis import Redis
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
+from app.api.pages import router as pages_router
 from app.api.v1.router import api_router
 from app.core.config import Settings, get_settings
 from app.core.errors import AppError, ErrorCode, InternalError
@@ -50,6 +51,7 @@ def create_app(
     app.state.quota = QuotaService(supabase_client, settings)
 
     app.include_router(api_router)
+    app.include_router(pages_router)
 
     @app.exception_handler(AppError)
     async def app_error_handler(request: Request, exc: AppError) -> JSONResponse:

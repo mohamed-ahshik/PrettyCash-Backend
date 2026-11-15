@@ -138,6 +138,7 @@ or documentation.
   - `01-api`
   - `02-ai-providers`
   - `03-queues-and-workers`
+  - `04-web-content`
 - Do not create a folder for a section with no documents. Add the folder when the first document
   for that section is created, using the next ordinal.
 - Renumbering a section folder is an architecture change: update the architecture map, both MOCs,
@@ -215,6 +216,6 @@ A task is not complete until all applicable boxes are checked:
 - Read first: `docs/prettycash-backend-architecture/ARCHITECTURE.md`.
 - Specs: `docs/specs/<NN-section>/` (MOC: [[SPECS]]).
 - Plans: `docs/plans/<NN-section>/` (MOC: [[PLANS]]).
-- Sections: [[API]], [[AI-PROVIDERS]], [[QUEUES-AND-WORKERS]].
+- Sections: [[API]], [[AI-PROVIDERS]], [[QUEUES-AND-WORKERS]], [[WEB-CONTENT]].
 - Update after implementation: `ARCHITECTURE.md` change log and current-state sections.
 - Run: `uv run pytest`, `uv run ruff check .`.

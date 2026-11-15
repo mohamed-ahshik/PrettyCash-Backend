@@ -4,8 +4,8 @@ import fakeredis
 import httpx
 import pytest
 
-from app.core.config import Settings
 from app.api.deps import require_scan_access, require_user
+from app.core.config import Settings
 from app.main import create_app
 from app.services.quota import Entitlement
 from app.store.base import CreatedJob

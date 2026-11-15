@@ -1,12 +1,11 @@
 import base64
 import io
 import json
+from types import SimpleNamespace
 
 import fakeredis
 import httpx
 from PIL import Image
-
-from types import SimpleNamespace
 
 from app.api.deps import require_scan_access, require_user
 from app.core.config import Settings

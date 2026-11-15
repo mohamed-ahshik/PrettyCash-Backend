@@ -2,10 +2,9 @@ from dataclasses import dataclass
 from datetime import UTC, date, datetime, timedelta
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
-from supabase import Client
-
 from app.core.config import Settings
 from app.core.errors import DailyTrialLimitError, SubscriptionRequiredError
+from supabase import Client
 
 
 @dataclass(frozen=True)
@@ -77,7 +76,9 @@ def evaluate_entitlement(
     if not in_trial:
         return Entitlement(False, False, 0, scans_used, daily_limit, False, "subscription_required")
     if scans_used >= daily_limit:
-        return Entitlement(False, True, days_left, scans_used, daily_limit, False, "daily_trial_limit")
+        return Entitlement(
+            False, True, days_left, scans_used, daily_limit, False, "daily_trial_limit"
+        )
     return Entitlement(False, True, days_left, scans_used, daily_limit, True, None)
 
 
@@ -111,7 +112,8 @@ class QuotaService:
             return entitlement
         if entitlement.block_reason == "daily_trial_limit":
             raise DailyTrialLimitError(
-                f"You have used {scans_used}/{self._settings.trial_daily_scan_limit} AI scans today."
+                f"You have used {scans_used}/{self._settings.trial_daily_scan_limit} "
+                "AI scans today."
             )
         if entitlement.block_reason == "subscription_required":
             raise SubscriptionRequiredError()
