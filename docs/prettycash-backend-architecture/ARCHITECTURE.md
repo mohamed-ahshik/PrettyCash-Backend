@@ -644,7 +644,7 @@ they do not have separate spec folders yet.
 | `docs/specs/02-ai-providers/2026-10-22-litellm-migration-design.md` | Spec | Implemented and verified | Provider calls via LiteLLM |
 | `docs/specs/02-ai-providers/2026-10-24-auto-categorization-design.md` | Spec | Implemented | Gemini category selection, queue fields, confidence threshold |
 | `docs/specs/02-ai-providers/2026-10-31-posthog-llm-observability-design.md` | Spec | Implemented (job-only attribution) | `$ai_generation` events, usage/cost, latency, failure isolation |
-| `docs/specs/04-web-content/2026-11-15-privacy-policy-page-design.md` | Spec | Implemented | Public `GET /privacy` HTML page served from the API image |
+| `docs/specs/04-web-content/2026-11-15-privacy-policy-page-design.md` | Spec | In progress | Public `GET /privacy` HTML page served from the API image |
 | `docs/plans/01-api/2026-09-13-prettycash-backend-receipt-analysis.md` | Plan | Implemented | Initial API + Gemini extraction |
 | `docs/plans/01-api/2026-10-24-receipt-analysis-idempotency.md` | Plan | Implemented | `Idempotency-Key`, `request_id`, duplicate-job reuse |
 | `docs/plans/03-queues-and-workers/2026-09-13-prettycash-backend-redis-queue.md` | Plan | Implemented | Async queue + Supabase job store |
@@ -652,7 +652,7 @@ they do not have separate spec folders yet.
 | `docs/plans/02-ai-providers/2026-10-22-litellm-migration.md` | Plan | Implemented | Provider calls via LiteLLM |
 | `docs/plans/02-ai-providers/2026-10-24-auto-categorization.md` | Plan | Implemented | Gemini category selection, queue fields, confidence threshold |
 | `docs/plans/02-ai-providers/2026-10-31-posthog-llm-observability.md` | Plan | Implemented | `$ai_generation` events, usage/cost, latency, failure isolation |
-| `docs/plans/04-web-content/2026-11-16-privacy-policy-page.md` | Plan | Implemented | Public `GET /privacy` HTML page served from the API image |
+| `docs/plans/04-web-content/2026-11-16-privacy-policy-page.md` | Plan | In progress | Public `GET /privacy` HTML page served from the API image |
 
 The frontend synthetic `$ai_generation` event was removed as part of the PostHog observability
 implementation. The frontend auto-categorization spec in the sibling repo is implemented; on-device
