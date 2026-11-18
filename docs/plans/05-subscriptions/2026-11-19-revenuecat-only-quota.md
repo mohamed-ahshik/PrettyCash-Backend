@@ -12,6 +12,8 @@
 
 **Branch:** `mohamedahshik/addTrialPeriod` (already checked out and clean).
 
+**Implementation status:** Implemented.
+
 **Note:** This repo has no existing billing architecture/API document; the frontend spec is the cross-repo contract.
 
 ## Global Constraints
@@ -54,7 +56,7 @@
 - `QuotaService.entitlement(user_id: str) -> Entitlement`
 - `QuotaService.consume_scan(user_id: str) -> Entitlement`
 
-- [ ] **Step 1: Write the failing quota tests**
+- [x] **Step 1: Write the failing quota tests**
 
 Replace `tests/test_quota.py` with:
 
@@ -75,12 +77,12 @@ def test_missing_profile_is_blocked():
 
 Remove the daily-trial tests. Update `profile()` to return only `{"is_pro": ...}`.
 
-- [ ] **Step 2: Run the tests to verify they fail**
+- [x] **Step 2: Run the tests to verify they fail**
 
 Run: `./.venv/bin/python -m pytest tests/test_quota.py -q`
 Expected: FAIL — `evaluate_entitlement` still expects `scans_used` and returns the old fields.
 
-- [ ] **Step 3: Simplify `quota.py`**
+- [x] **Step 3: Simplify `quota.py`**
 
 - `Entitlement` fields: `is_pro`, `can_scan`, `block_reason`.
 - `_profile` selects only `is_pro`.
@@ -90,23 +92,23 @@ Expected: FAIL — `evaluate_entitlement` still expects `scans_used` and returns
 - `QuotaService.consume_scan`: if `is_pro` return; otherwise raise `SubscriptionRequiredError`; do not write `scan_usage`.
 - Remove `DailyTrialLimitError` import.
 
-- [ ] **Step 4: Remove the trial error and settings**
+- [x] **Step 4: Remove the trial error and settings**
 
 - Delete `DailyTrialLimitError` and `DAILY_TRIAL_LIMIT_REACHED` from `app/core/errors.py`; update `tests/test_core.py`'s expected error-code set.
 - Remove `trial_days` and `trial_daily_scan_limit` from `app/core/config.py`.
 - Remove `TRIAL_DAYS` and `TRIAL_DAILY_SCAN_LIMIT` from `.env.example`.
 
-- [ ] **Step 5: Update fixtures**
+- [x] **Step 5: Update fixtures**
 
 - `tests/conftest.py`: `Entitlement(is_pro=True, can_scan=True, block_reason=None)` for the allow-scan override.
 - `tests/test_api_receipt.py`: same for `_allow_scan`.
 
-- [ ] **Step 6: Run the tests**
+- [x] **Step 6: Run the tests**
 
 Run: `./.venv/bin/python -m pytest tests/test_quota.py tests/test_core.py tests/test_api_receipt.py -q`
 Expected: PASS.
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add app/services/quota.py app/core/errors.py app/core/config.py .env.example tests/test_quota.py tests/test_core.py tests/conftest.py tests/test_api_receipt.py
@@ -125,7 +127,7 @@ git commit -m "feat: make quota depend only on RevenueCat entitlement"
 - Produces: `GET /api/v1/billing/entitlement` → `{isPro, canScan, blockReason}`
 - Produces: webhook active set `{INITIAL_PURCHASE, RENEWAL, UNCANCELLATION, PRODUCT_CHANGE}`; inactive set `{EXPIRATION, SUBSCRIPTION_PAUSED}`.
 
-- [ ] **Step 1: Write the failing billing tests**
+- [x] **Step 1: Write the failing billing tests**
 
 Add to `tests/test_billing.py`:
 
@@ -146,12 +148,12 @@ Add webhook cases using `FakeSupabase`:
 - `BILLING_ISSUE` → `updated is None`
 - `CANCELLATION` → `updated is None`
 
-- [ ] **Step 2: Run the tests to verify they fail**
+- [x] **Step 2: Run the tests to verify they fail**
 
 Run: `./.venv/bin/python -m pytest tests/test_billing.py -q`
 Expected: FAIL — the payload still has the trial/daily fields and ignored events still update.
 
-- [ ] **Step 3: Implement the payload and webhook mapping**
+- [x] **Step 3: Implement the payload and webhook mapping**
 
 `_entitlement_payload` returns only `isPro`, `canScan`, `blockReason`.
 
@@ -167,12 +169,12 @@ is_pro = event_type in active_events
 
 `BILLING_ISSUE` and `CANCELLATION` therefore return without an update.
 
-- [ ] **Step 4: Run the tests**
+- [x] **Step 4: Run the tests**
 
 Run: `./.venv/bin/python -m pytest tests/test_billing.py -q`
 Expected: PASS.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add app/api/v1/billing.py tests/test_billing.py
@@ -187,15 +189,15 @@ git commit -m "feat: simplify entitlement payload and keep access during grace"
 - Modify: `docs/plans/PLANS.md`
 - Modify: `docs/plans/05-subscriptions/2026-11-19-revenuecat-only-quota.md`
 
-- [ ] **Step 1: Index the plan**
+- [x] **Step 1: Index the plan**
 
 Add a `05-subscriptions/` section to `docs/plans/PLANS.md`.
 
-- [ ] **Step 2: Update statuses**
+- [x] **Step 2: Update statuses**
 
 Set the plan implementation status to `Implemented; device verification pending.` Tick the completed steps.
 
-- [ ] **Step 3: Run the full backend checks**
+- [x] **Step 3: Run the full backend checks**
 
 Run: `./.venv/bin/python -m pytest -q`
 Expected: PASS.
@@ -203,7 +205,7 @@ Expected: PASS.
 Run: `./.venv/bin/python -m ruff check app tests`
 Expected: PASS (or only pre-existing findings, which must be reported).
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add docs/plans/PLANS.md docs/plans/05-subscriptions/2026-11-19-revenuecat-only-quota.md
@@ -214,4 +216,4 @@ git commit -m "docs: document RevenueCat-only quota"
 
 ## Implementation status
 
-Not started.
+**Implementation status:** Implemented.
