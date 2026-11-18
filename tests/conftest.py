@@ -75,11 +75,7 @@ def client(settings, job_store):
     app = create_app(settings, job_store=job_store, redis_client=redis_client)
     app.dependency_overrides[require_user] = lambda: SimpleNamespace(id="test-user")
     app.dependency_overrides[require_scan_access] = lambda: Entitlement(
-        is_pro=False,
-        in_trial=True,
-        trial_days_left=6,
-        daily_scans_used=1,
-        daily_limit=3,
+        is_pro=True,
         can_scan=True,
         block_reason=None,
     )

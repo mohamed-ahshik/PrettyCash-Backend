@@ -18,11 +18,7 @@ AUTH = {"X-API-Key": "test-vision-key", "Authorization": "Bearer test-user"}
 def _allow_scan(app):
     app.dependency_overrides[require_user] = lambda: SimpleNamespace(id="test-user")
     app.dependency_overrides[require_scan_access] = lambda: Entitlement(
-        is_pro=False,
-        in_trial=True,
-        trial_days_left=6,
-        daily_scans_used=1,
-        daily_limit=3,
+        is_pro=True,
         can_scan=True,
         block_reason=None,
     )

@@ -10,7 +10,6 @@ class ErrorCode(StrEnum):
     NOT_FOUND = "NOT_FOUND"
     NOT_A_RECEIPT = "NOT_A_RECEIPT"
     SUBSCRIPTION_REQUIRED = "SUBSCRIPTION_REQUIRED"
-    DAILY_TRIAL_LIMIT_REACHED = "DAILY_TRIAL_LIMIT_REACHED"
 
 
 class AppError(Exception):
@@ -63,9 +62,3 @@ class SubscriptionRequiredError(AppError):
     status_code = 403
     code = ErrorCode.SUBSCRIPTION_REQUIRED
     default_message = "A PrettyCash Pro subscription is required"
-
-
-class DailyTrialLimitError(AppError):
-    status_code = 403
-    code = ErrorCode.DAILY_TRIAL_LIMIT_REACHED
-    default_message = "Daily trial scan limit reached"
