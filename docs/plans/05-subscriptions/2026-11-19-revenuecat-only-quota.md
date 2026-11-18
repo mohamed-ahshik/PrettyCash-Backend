@@ -12,7 +12,7 @@
 
 **Branch:** `mohamedahshik/addTrialPeriod` (already checked out and clean).
 
-**Implementation status:** Implemented.
+**Implementation status:** Implemented; device verification pending.
 
 **Note:** This repo has no existing billing architecture/API document; the frontend spec is the cross-repo contract.
 
@@ -216,4 +216,4 @@ git commit -m "docs: document RevenueCat-only quota"
 
 ## Implementation status
 
-**Implementation status:** Implemented.
+**Implementation status:** Implemented; device verification pending.
