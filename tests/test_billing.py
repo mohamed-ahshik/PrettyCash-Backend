@@ -64,7 +64,8 @@ async def _post_webhook(client, event_type):
 
 
 def test_entitlement_payload_shape():
-    assert _entitlement_payload(Entitlement(True, True, None)) == {
+    entitlement = Entitlement(is_pro=True, can_scan=True, block_reason=None)
+    assert _entitlement_payload(entitlement) == {
         "isPro": True,
         "canScan": True,
         "blockReason": None,

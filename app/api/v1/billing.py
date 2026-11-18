@@ -5,11 +5,12 @@ from fastapi import APIRouter, Depends, Header, Request
 
 from app.api.deps import require_user
 from app.core.errors import UnauthorizedError
+from app.services.quota import Entitlement
 
 router = APIRouter(prefix="/billing")
 
 
-def _entitlement_payload(entitlement: Any) -> dict[str, Any]:
+def _entitlement_payload(entitlement: Entitlement) -> dict[str, Any]:
     return {
         "isPro": entitlement.is_pro,
         "canScan": entitlement.can_scan,

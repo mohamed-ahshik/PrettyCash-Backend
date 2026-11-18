@@ -1,6 +1,5 @@
 from dataclasses import dataclass
 
-from app.core.config import Settings
 from app.core.errors import SubscriptionRequiredError
 from supabase import Client
 
@@ -30,9 +29,8 @@ def evaluate_entitlement(profile: dict | None) -> Entitlement:
 
 
 class QuotaService:
-    def __init__(self, client: Client, settings: Settings) -> None:
+    def __init__(self, client: Client) -> None:
         self._client = client
-        self._settings = settings
 
     def entitlement(self, user_id: str) -> Entitlement:
         return evaluate_entitlement(_profile(self._client, user_id))

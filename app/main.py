@@ -48,7 +48,7 @@ def create_app(
     app.state.rate_limiter = RedisRateLimiter(redis_client, settings.rate_limit_per_minute)
     app.state.job_store = job_store
     app.state.supabase = supabase_client
-    app.state.quota = QuotaService(supabase_client, settings)
+    app.state.quota = QuotaService(supabase_client)
 
     app.include_router(api_router)
     app.include_router(pages_router)
