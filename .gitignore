@@ -9,3 +9,6 @@ dist/
 .DS_Store
 
 supabase/.temp
+
+# Superpowers scratch workspace
+.superpowers/
