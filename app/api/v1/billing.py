@@ -5,17 +5,14 @@ from fastapi import APIRouter, Depends, Header, Request
 
 from app.api.deps import require_user
 from app.core.errors import UnauthorizedError
+from app.services.quota import Entitlement
 
 router = APIRouter(prefix="/billing")
 
 
-def _entitlement_payload(entitlement: Any) -> dict[str, Any]:
+def _entitlement_payload(entitlement: Entitlement) -> dict[str, Any]:
     return {
         "isPro": entitlement.is_pro,
-        "inTrial": entitlement.in_trial,
-        "trialDaysLeft": entitlement.trial_days_left,
-        "dailyScansUsed": entitlement.daily_scans_used,
-        "dailyLimit": entitlement.daily_limit,
         "canScan": entitlement.can_scan,
         "blockReason": entitlement.block_reason,
     }
@@ -45,7 +42,7 @@ async def revenuecat_webhook(
         return
 
     active_events = {"INITIAL_PURCHASE", "RENEWAL", "UNCANCELLATION", "PRODUCT_CHANGE"}
-    inactive_events = {"EXPIRATION", "BILLING_ISSUE"}
+    inactive_events = {"EXPIRATION", "SUBSCRIPTION_PAUSED"}
     if event_type not in active_events | inactive_events:
         return
 

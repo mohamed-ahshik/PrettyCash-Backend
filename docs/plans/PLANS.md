@@ -23,6 +23,7 @@ same `01-`, `02-`, `03-` order as specs. Execute plans in the order listed in [[
 - `03-queues-and-workers/` — [[QUEUES-AND-WORKERS-PLANS]] — Redis queue and classifier-worker
   implementation.
 - `04-web-content/` — [[WEB-CONTENT-PLANS]] — privacy policy page and public web content.
+- `05-subscriptions/` — RevenueCat-only quota and Play trial implementation.
 
 ## Related
 

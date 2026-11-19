@@ -62,7 +62,6 @@ def test_all_error_codes_exist():
         "NOT_FOUND",
         "NOT_A_RECEIPT",
         "SUBSCRIPTION_REQUIRED",
-        "DAILY_TRIAL_LIMIT_REACHED",
     }
     assert InternalError().status_code == 500
     assert RateLimitedError().status_code == 429
